@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Product",
+  "type": "object",
+  "required": ["name", "price", "category", "sku"],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Unique identifier for the product"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Product name"
+    },
+    "description": {
+      "type": ["string", "null"],
+      "description": "Product description"
+    },
+    "price": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Product price"
+    },
+    "category": {
+      "type": "string",
+      "description": "Product category"
+    },
+    "sku": {
+      "type": "string",
+      "description": "Stock Keeping Unit"
+    },
+    "stock_quantity": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Available stock quantity"
+    },
+    "is_available": {
+      "type": "boolean",
+      "description": "Whether the product is available"
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "User",
+  "type": "object",
+  "required": ["username", "email", "first_name", "last_name"],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Unique identifier for the user"
+    },
+    "username": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 50,
+      "description": "Username for the account"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email address"
+    },
+    "first_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50,
+      "description": "First name"
+    },
+    "last_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50,
+      "description": "Last name"
+    },
+    "phone": {
+      "type": ["string", "null"],
+      "description": "Phone number"
+    },
+    "is_active": {
+      "type": "boolean",
+      "description": "Whether the user is active"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Creation timestamp"
+    }
+  }
+}

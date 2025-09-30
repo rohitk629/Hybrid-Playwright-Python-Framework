@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Execution Report</title>
+  <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .email-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .email-header h1 {
+            margin: 0;
+            font-size: 28px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .email-header p {
+            margin: 10px 0 0 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .email-body {
+            padding: 30px;
+        }
+
+        .greeting {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .summary-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .summary-box h2 {
+            margin: 0 0 15px 0;
+            font-size: 20px;
+        }
+
+        .stats-grid {
+            display: table;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .stat-row {
+            display: table-row;
+        }
+
+        .stat-cell {
+            display: table-cell;
+            padding: 10px;
+            text-align: center;
+            border-right: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .stat-cell:last-child {
+            border-right: none;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+
+        .status-badges {
+            display: table;
+            width: 100%;
+            margin: 25px 0;
+        }
+
+        .badge-row {
+            display: table-row;
+        }
+
+        .badge-cell {
+            display: table-cell;
+            padding: 15px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 18px;
+            min-width: 80px;
+        }
+
+        .badge-passed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge-skipped {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .progress-section {
+            margin: 25px 0;
+        }
+
+        .progress-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .progress-bar-wrapper {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 30px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            display: flex;
+        }
+
+        .progress-segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .progress-passed {
+            background: #28a745;
+        }
+
+        .progress-failed {
+            background: #dc3545;
+        }
+
+        .progress-skipped {
+            background: #ffc107;
+        }
+
+        .info-table {
+            width: 100%;
+            margin: 25px 0;
+            border-collapse: collapse;
+        }
+
+        .info-table tr {
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .info-table td {
+            padding: 12px 8px;
+            font-size: 14px;
+        }
+
+        .info-table td:first-child {
+            color: #666;
+            font-weight: 600;
+            width: 40%;
+        }
+
+        .info-table td:last-child {
+            color: #333;
+        }
+
+        .highlight-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .highlight-box p {
+            margin: 5px 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .highlight-box strong {
+            color: #667eea;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            transition: transform 0.3s ease;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .alert-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .alert-box.success {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .alert-box.danger {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        .alert-box p {
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .email-footer {
+            background: #343a40;
+            color: white;
+            padding: 25px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .email-footer p {
+            margin: 5px 0;
+            opacity: 0.8;
+        }
+
+        .email-footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #ddd, transparent);
+            margin: 30px 0;
+        }
+
+        .icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                margin: 0;
+                border-radius: 0;
+            }
+
+            .email-body {
+                padding: 20px;
+            }
+
+            .stat-cell {
+                font-size: 12px;
+            }
+
+            .stat-number {
+                font-size: 24px;
+            }
+
+            .status-badges {
+                display: block;
+            }
+
+            .badge-cell {
+                display: block;
+                padding: 10px;
+            }
+        }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="email-header">
+      <h1>🎯 Test Execution Report</h1>
+      <p>{{project_name}} - {{environment}} Environment</p>
+    </div>
+    <div class="email-body">
+      <div class="greeting">
+        <p>Hello {{recipient_name}},</p>
+        <p>The automated test execution for <strong>{{test_suite}}</strong> has been completed. Please find the summary below:</p>
+      </div>
+      <div class="summary-box">
+        <h2>Execution Summary</h2>
+        <div class="stats-grid">
+          <div class="stat-row">
+            <div class="stat-cell">
+              <span class="stat-number">{{total_tests}}</span> <span class="stat-label">Total</span>
+            </div>
+            <div class="stat-cell">
+              <span class="stat-number">{{passed_tests}}</span> <span class="stat-label">Passed</span>
+            </div>
+            <div class="stat-cell">
+              <span class="stat-number">{{failed_tests}}</span> <span class="stat-label">Failed</span>
+            </div>
+            <div class="stat-cell">
+              <span class="stat-number">{{skipped_tests}}</span> <span class="stat-label">Skipped</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="status-badges">
+        <div class="badge-row">
+          <div class="badge-cell">
+            <div class="status-badge badge-passed">
+              {{passed_tests}}
+            </div><span class="badge-label">Passed</span>
+          </div>
+          <div class="badge-cell">
+            <div class="status-badge badge-failed">
+              {{failed_tests}}
+            </div><span class="badge-label">Failed</span>
+          </div>
+          <div class="badge-cell">
+            <div class="status-badge badge-skipped">
+              {{skipped_tests}}
+            </div><span class="badge-label">Skipped</span>
+          </div>
+        </div>
+      </div>
+      <div class="progress-section">
+        <div class="progress-label">
+          Success Rate: {{success_rate}}%
+        </div>
+        <div class="progress-bar-wrapper">
+        <div class="progress-bar">
+          <div class="progress-segment progress-passed" style="width: {{pass_percentage}}%">
+            {{pass_percentage}}%
+          </div>
+          <div class="progress-segment progress-failed" style="width: {{fail_percentage}}%">
+            {{
+            <div class="divider"></div>
+            <table class="info-table">
+              <tr>
+                <td>📅 Execution Date:</td>
+                <td>{{execution_date}}</td>
+              </tr>
+              <tr>
+                <td>⏱️ Execution Time:</td>
+                <td>{{execution_time}}</td>
+              </tr>
+              <tr>
+                <td>⏳ Total Duration:</td>
+                <td>{{total_duration}}</td>
+              </tr>
+              <tr>
+                <td>🌐 Browser:</td>
+                <td>{{browser}}</td>
+              </tr>
+              <tr>
+                <td>🖥️ Environment:</td>
+                <td>{{environment}}</td>
+              </tr>
+              <tr>
+                <td>📦 Test Suite:</td>
+                <td>{{test_suite}}</td>
+              </tr>
+              <tr>
+                <td>👤 Executed By:</td>
+                <td>{{executed_by}}</td>
+              </tr>
+            </table>{{#if all_passed}}
+            <div class="alert-box success">
+              <p><strong>✅ Excellent!</strong> All tests passed successfully. The application is working as expected.</p>
+            </div>{{/if}} {{#if has_failures}}
+            <div class="alert-box danger">
+              <p><strong>⚠️ Attention Required!</strong> {{failed_tests}} test(s) failed. Please review the detailed report for more information.</p>
+            </div>{{/if}} {{#if has_skipped}}
+            <div class="alert-box">
+              <p><strong>ℹ️ Note:</strong> {{skipped_tests}} test(s) were skipped during this execution.</p>
+            </div>{{/if}}
+            <div class="highlight-box">
+              <p><strong>Success Rate:</strong> {{success_rate}}%</p>
+              <p><strong>Average Test Duration:</strong> {{average_duration}} seconds</p>
+              <p><strong>Total Execution Time:</strong> {{total_duration}}</p>{{#if fastest_test}}
+              <p><strong>Fastest Test:</strong> {{fastest_test}} ({{fastest_duration}}s)</p>{{/if}} {{#if slowest_test}}
+              <p><strong>Slowest Test:</strong> {{slowest_test}} ({{slowest_duration}}s)</p>{{/if}}
+            </div>{{#if has_failures}}
+            <div class="divider"></div>
+            <h3 style="color: #dc3545; margin: 20px 0 15px 0;">❌ Failed Tests</h3>{{#each failed_test_list}} {{/each}}
+            <table class="info-table">
+              <tr>
+                <td colspan="2" style="background: #f8d7da; padding: 15px; border-radius: 5px; margin-bottom: 10px;"><strong style="color: #721c24;">{{this.name}}</strong><br>
+                <span style="font-size: 12px; color: #721c24;">{{this.error_message}}</span><br>
+                <span style="font-size: 11px; color: #999;">Duration: {{this.duration}}s</span></td>
+              </tr>
+            </table>{{/if}}
+            <div class="divider"></div>
+            <h3 style="color: #667eea; margin: 20px 0 15px 0;">📊 Key Metrics</h3>
+            <table class="info-table">
+              <tr>
+                <td>Pass Rate:</td>
+                <td><strong style="color: #28a745;">{{pass_percentage}}%</strong></td>
+              </tr>
+              <tr>
+                <td>Fail Rate:</td>
+                <td><strong style="color: #dc3545;">{{fail_percentage}}%</strong></td>
+              </tr>
+              <tr>
+                <td>Skip Rate:</td>
+                <td><strong style="color: #ffc107;">{{skip_percentage}}%</strong></td>
+              </tr>
+              <tr>
+                <td>Tests per Minute:</td>
+                <td>{{tests_per_minute}}</td>
+              </tr>
+              <tr>
+                <td>Reliability Score:</td>
+                <td>{{reliability_score}}/10</td>
+              </tr>
+            </table>{{#if has_failures}}
+            <div class="divider"></div>
+            <h3 style="color: #667eea; margin: 20px 0 15px 0;">🔧 Recommended Actions</h3>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
+              <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
+                <li>Review failed test cases in the detailed report</li>
+                <li>Check application logs for errors during test execution</li>
+                <li>Verify environment configuration and dependencies</li>
+                <li>Re-run failed tests to check for flakiness</li>
+                <li>Update test data if necessary</li>
+                <li>Contact the development team if bugs are confirmed</li>
+              </ul>
+            </div>{{/if}}
+            <div class="button-container">
+              <a href="{{report_url}}" class="cta-button">📄 View Detailed Report</a>
+            </div>
+            <div class="highlight-box" style="background: #e7f3ff; border-left-color: #2196F3;">
+              <p><strong style="color: #2196F3;">📌 Quick Links:</strong></p>
+              <p><a href="{{report_url}}" style="color: #2196F3; text-decoration: none;">📊 Full HTML Report</a> | <a href="{{jenkins_url}}" style="color: #2196F3; text-decoration: none;">🔧 Jenkins Build</a> | <a href="{{jira_url}}" style="color: #2196F3; text-decoration: none;">🐛 JIRA Dashboard</a> | <a href="{{logs_url}}" style="color: #2196F3; text-decoration: none;">📋 Logs</a></p>
+            </div>{{#if test_coverage}}
+            <div class="divider"></div>
+            <h3 style="color: #667eea; margin: 20px 0 15px 0;">📈 Test Coverage</h3>
+            <table class="info-table">
+              <tr>
+                <td>UI Tests:</td>
+                <td>{{ui_test_count}} ({{ui_test_percentage}}%)</td>
+              </tr>
+              <tr>
+                <td>API Tests:</td>
+                <td>{{api_test_count}} ({{api_test_percentage}}%)</td>
+              </tr>
+              <tr>
+                <td>Integration Tests:</td>
+                <td>{{integration_test_count}} ({{integration_test_percentage}}%)</td>
+              </tr>
+              <tr>
+                <td>Code Coverage:</td>
+                <td><strong>{{code_coverage}}%</strong></td>
+              </tr>
+            </table>{{/if}} {{#if show_trends}}
+            <div class="divider"></div>
+            <h3 style="color: #667eea; margin: 20px 0 15px 0;">📉 Trend Analysis</h3>
+            <table class="info-table">
+              <tr>
+                <td>Previous Run:</td>
+                <td>{{previous_success_rate}}% success rate</td>
+              </tr>
+              <tr>
+                <td>Trend:</td>
+                <td>{{#if trend_up}} <strong style="color: #28a745;">↗️ Improved by {{trend_change}}%</strong> {{else}} <strong style="color: #dc3545;">↘️ Decreased by {{trend_change}}%</strong> {{/if}}</td>
+              </tr>
+              <tr>
+                <td>7-Day Average:</td>
+                <td>{{seven_day_average}}%</td>
+              </tr>
+              <tr>
+                <td>30-Day Average:</td>
+                <td>{{thirty_day_average}}%</td>
+              </tr>
+            </table>{{/if}} {{#if notes}}
+            <div class="divider"></div>
+            <h3 style="color: #667eea; margin: 20px 0 15px 0;">📝 Notes</h3>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; line-height: 1.6;">
+              {{notes}}
+            </div>{{/if}}
+            <div class="divider"></div>
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; text-align: center;">
+              <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">Questions or concerns? Contact the QA Team</p>
+              <p style="margin: 0; font-size: 12px; color: #999;">📧 Email: <a href="mailto:{{qa_team_email}}" style="color: #667eea; text-decoration: none;">{{qa_team_email}}</a> | 💬 Slack: <a href="{{slack_channel}}" style="color: #667eea; text-decoration: none;">#qa-automation</a></p>
+            </div>
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e9ecef;">
+              <p style="font-size: 14px; color: #666; line-height: 1.6;">This is an automated email from the Test Automation Framework. Please do not reply to this email.</p>
+              <p style="font-size: 14px; color: #666; margin-top: 15px;">Best regards,<br>
+              <strong style="color: #667eea;">Automated Testing Team</strong></p>
+            </div>
+          </div>
+          <div class="email-footer">
+            <p><strong>Hybrid Automation Framework</strong></p>
+            <p>Report Generated: {{report_generation_time}}</p>
+            <p>Build: <a href="{{build_url}}">{{build_number}}</a> | Version: {{framework_version}}</p>
+            <p style="margin-top: 15px;"><a href="{{unsubscribe_url}}" style="color: #667eea;">Unsubscribe</a> | <a href="{{preferences_url}}" style="color: #667eea;">Email Preferences</a></p>
+            <p style="margin-top: 15px; font-size: 11px;">© 2025 Test Automation Team. All rights reserved.</p>
+          </div>
+        </div><img src="{{tracking_pixel_url}}" width="1" height="1" alt="{{tracking_pixel_url}}" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

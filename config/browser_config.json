@@ -1,0 +1,38 @@
+{
+  "browsers": {
+    "chrome": {
+      "browserName": "chrome",
+      "headless": false,
+      "args": [
+        "--start-maximized",
+        "--disable-dev-shm-usage",
+        "--no-sandbox",
+        "--disable-gpu"
+      ],
+      "prefs": {
+        "download.default_directory": "./downloads",
+        "download.prompt_for_download": false
+      },
+      "capabilities": {
+        "acceptInsecureCerts": true,
+        "pageLoadStrategy": "normal"
+      }
+    }
+  },
+  "playwright_config": {
+    "chrome": {
+      "channel": "chrome",
+      "headless": false,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "ignoreHTTPSErrors": true
+    }
+  },
+  "default_timeouts": {
+    "implicit_wait": 10,
+    "explicit_wait": 30,
+    "page_load_timeout": 60
+  }
+}
