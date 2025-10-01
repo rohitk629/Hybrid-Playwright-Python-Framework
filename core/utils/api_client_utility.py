@@ -41,6 +41,10 @@ class APIClientUtility:
             base_url: Base URL for API endpoints
             timeout: Default request timeout in seconds
         """
+        if base_url is None:
+            from core.constants.application_constants import ApplicationConstants
+            base_url = ApplicationConstants.API_BASE_URL
+
         self.base_url = base_url
         self.timeout = timeout
         self.session = requests.Session()
@@ -346,6 +350,26 @@ class APIClientUtility:
             raise
 
     # ==================== Authentication Methods ====================
+
+    def set_authentication(self, auth_type: str, **kwargs):
+        """
+        Set authentication
+
+        Args:
+            auth_type: Type of auth ('basic', 'bearer', 'api_key')
+            **kwargs: Authentication parameters
+        """
+        if auth_type.lower() == 'basic':
+            username = kwargs.get('username')
+            password = kwargs.get('password')
+            self.set_basic_auth(username, password)
+        elif auth_type.lower() == 'bearer':
+            token = kwargs.get('token')
+            self.set_bearer_token(token)
+        elif auth_type.lower() == 'api_key':
+            api_key = kwargs.get('api_key')
+            key_name = kwargs.get('key_name', 'X-API-Key')
+            self.set_api_key(api_key, key_name)
 
     def set_basic_auth(self, username: str, password: str) -> None:
         """
