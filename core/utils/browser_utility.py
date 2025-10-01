@@ -42,6 +42,35 @@ class BrowserUtility:
         logger.info("BrowserUtility initialized")
 
     # ==================== Browser Initialization ====================
+    def initialize_browser(self, browser_type: str = 'chromium', **kwargs):
+        """Initialize browser by type"""
+        if not self.playwright:
+            self.init_playwright()
+        return self.init_browser(browser_type, **kwargs)
+
+    def create_browser_context(self, **options):
+        """Create new browser context"""
+        if not self.browser:
+            raise Exception("Browser not initialized. Call initialize_browser() first")
+
+        if not options:
+            options = {
+                'viewport': {'width': 1920, 'height': 1080},
+                'accept_downloads': True
+            }
+
+        self.context = self.browser.new_context(**options)
+        return self.context
+
+    def create_page(self):
+        """Create new page in current context"""
+        if not self.context:
+            raise Exception("Context not created. Call create_browser_context() first")
+
+        self.page = self.context.new_page()
+        self.page.set_default_timeout(self.default_timeout)
+        return self.page
+
 
     def init_playwright(self) -> Playwright:
         """
