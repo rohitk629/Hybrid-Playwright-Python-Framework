@@ -1,885 +1,750 @@
 """
-Base Test class that all test classes should extend
-Provides common functionality for test setup, teardown, and assertions
-
-File: framework/base/base_test.py
-Author: Automation Team
-Description: Base class for all test classes with comprehensive setup, teardown,
-             assertions, and reporting capabilities.
+Base Page class for Page Object Model
+Provides common page functionalities for all page objects
 """
-
-import pytest
+from playwright.sync_api import Page, TimeoutError as PlaywrightTimeout
+from typing import Optional, List, Dict, Any
 import logging
 import allure
-import os
-from typing import Any, Dict, List, Callable
-from datetime import datetime
-from pathlib import Path
-from core.utils.config_reader import ConfigReader
+import time
 from core.utils.browser_utility import BrowserUtility
-from core.utils.api_client_utility import APIClientUtility
-from core.constants.application_constants import ApplicationConstants
 
 
-class BaseTest:
+class BasePage:
     """
-    Base test class providing common functionality for all tests
-    All test classes should inherit from this class
-
-    Features:
-    - Automatic setup and teardown
-    - Browser initialization for UI tests
-    - API client initialization for API tests
-    - Comprehensive assertion methods
-    - Screenshot capture on failure
-    - Test step logging
-    - Allure report integration
-    - Test data management
-    - Retry mechanism support
+    Base page class providing common page functionalities
+    All page object classes should inherit from this class
     """
 
-    def __init__(self):
-        """Initialize base test with configuration and utilities"""
-        self.config = ConfigReader()
-        self.logger = self._setup_logger()
-        self.browser_utility = None
-        self.api_client = None
-        self.test_name = None
-        self.test_start_time = None
-        self.test_data = {}
-        self.soft_assertions = []
-
-    def _setup_logger(self) -> logging.Logger:
+    def __init__(self, browser_utility: BrowserUtility):
         """
-        Setup logger for the test class
+        Initialize base page
+        Args:
+            browser_utility: BrowserUtility instance
+        """
+        self.browser_utility = browser_utility
+        self.page: Page = browser_utility.page
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.default_timeout = 30000  # 30 seconds in milliseconds
 
+    # ========================================================================
+    # NAVIGATION METHODS
+    # ========================================================================
+
+    @allure.step("Navigate to page: {url}")
+    def navigate_to(self, url: str, wait_until: str = "domcontentloaded"):
+        """
+        Navigate to specified URL
+        Args:
+            url: URL to navigate to
+            wait_until: When to consider navigation complete
+                       ('load', 'domcontentloaded', 'networkidle')
+        """
+        try:
+            self.browser_utility.navigate_to(url)
+            self.logger.info(f"Navigated to: {url}")
+        except Exception as e:
+            self.logger.error(f"Navigation failed to {url}: {e}")
+            raise
+
+    def refresh_page(self):
+        """Refresh current page"""
+        try:
+            self.page.reload()
+            self.logger.info("Page refreshed")
+        except Exception as e:
+            self.logger.error(f"Page refresh failed: {e}")
+            raise
+
+    def go_back(self):
+        """Navigate back in browser history"""
+        try:
+            self.page.go_back()
+            self.logger.info("Navigated back")
+        except Exception as e:
+            self.logger.error(f"Go back failed: {e}")
+            raise
+
+    def go_forward(self):
+        """Navigate forward in browser history"""
+        try:
+            self.page.go_forward()
+            self.logger.info("Navigated forward")
+        except Exception as e:
+            self.logger.error(f"Go forward failed: {e}")
+            raise
+
+    # ========================================================================
+    # ELEMENT INTERACTION METHODS
+    # ========================================================================
+
+    @allure.step("Click element: {selector}")
+    def click(self, selector: str, timeout: int = None):
+        """
+        Click on element
+        Args:
+            selector: Element selector
+            timeout: Maximum wait time in milliseconds
+        """
+        try:
+            timeout = timeout or self.default_timeout
+            self.page.wait_for_selector(selector, timeout=timeout)
+            self.page.click(selector)
+            self.logger.info(f"Clicked on element: {selector}")
+        except Exception as e:
+            self.logger.error(f"Click failed on {selector}: {e}")
+            raise
+
+    @allure.step("Double click element: {selector}")
+    def double_click(self, selector: str, timeout: int = None):
+        """Double click on element"""
+        try:
+            timeout = timeout or self.default_timeout
+            self.page.wait_for_selector(selector, timeout=timeout)
+            self.page.dblclick(selector)
+            self.logger.info(f"Double clicked on element: {selector}")
+        except Exception as e:
+            self.logger.error(f"Double click failed on {selector}: {e}")
+            raise
+
+    @allure.step("Right click element: {selector}")
+    def right_click(self, selector: str, timeout: int = None):
+        """Right click on element"""
+        try:
+            timeout = timeout or self.default_timeout
+            self.page.wait_for_selector(selector, timeout=timeout)
+            self.page.click(selector, button="right")
+            self.logger.info(f"Right clicked on element: {selector}")
+        except Exception as e:
+            self.logger.error(f"Right click failed on {selector}: {e}")
+            raise
+
+    @allure.step("Enter text '{text}' into: {selector}")
+    def enter_text(self, selector: str, text: str, clear: bool = True, timeout: int = None):
+        """
+        Enter text in input field
+        Args:
+            selector: Element selector
+            text: Text to enter
+            clear: Clear field before entering text
+            timeout: Maximum wait time
+        """
+        try:
+            timeout = timeout or self.default_timeout
+            self.page.wait_for_selector(selector, timeout=timeout)
+
+            if clear:
+                self.page.fill(selector, text)
+            else:
+                self.page.type(selector, text)
+
+            self.logger.info(f"Entered text in {selector}")
+        except Exception as e:
+            self.logger.error(f"Enter text failed on {selector}: {e}")
+            raise
+
+    def clear_text(self, selector: str, timeout: int = None):
+        """Clear text from input field"""
+        try:
+            timeout = timeout or self.default_timeout
+            self.page.wait_for_selector(selector, timeout=timeout)
+            self.page.fill(selector, "")
+            self.logger.info(f"Cleared text from {selector}")
+        except Exception as e:
+            self.logger.error(f"Clear text failed on {selector}: {e}")
+            raise
+
+    @allure.step("Press key: {key}")
+    def press_key(self, key: str):
+        """
+        Press keyboard key
+        Args:
+            key: Key to press (e.g., 'Enter', 'Tab', 'Escape')
+        """
+        try:
+            self.page.keyboard.press(key)
+            self.logger.info(f"Pressed key: {key}")
+        except Exception as e:
+            self.logger.error(f"Press key failed for {key}: {e}")
+            raise
+
+    # ========================================================================
+    # ELEMENT RETRIEVAL METHODS
+    # ========================================================================
+
+    @allure.step("Get text from element: {selector}")
+    def get_text(self, selector: str, timeout: int = None) -> str:
+        """
+        Get text from element
+        Args:
+            selector: Element selector
+            timeout: Maximum wait time
         Returns:
-            Configured logger instance
-        """
-        logger = logging.getLogger(self.__class__.__name__)
-
-        if not logger.handlers:
-            # Console handler
-            console_handler = logging.StreamHandler()
-            console_handler.setLevel(logging.INFO)
-
-            # File handler
-            log_dir = Path("logs")
-            log_dir.mkdir(exist_ok=True)
-            log_file = log_dir / f"{self.__class__.__name__}_{datetime.now().strftime('%Y%m%d')}.log"
-            file_handler = logging.FileHandler(log_file)
-            file_handler.setLevel(logging.DEBUG)
-
-            # Formatter
-            formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                datefmt='%Y-%m-%d %H:%M:%S'
-            )
-            console_handler.setFormatter(formatter)
-            file_handler.setFormatter(formatter)
-
-            # Add handlers
-            logger.addHandler(console_handler)
-            logger.addHandler(file_handler)
-            logger.setLevel(logging.DEBUG)
-
-        return logger
-
-    # ========================================================================
-    # PYTEST FIXTURES
-    # ========================================================================
-
-    @pytest.fixture(autouse=True)
-    def setup_test(self, request):
-        """
-        Setup method called before each test (pytest fixture)
-
-        Args:
-            request: pytest request fixture
-        """
-        self.test_name = request.node.name
-        self.test_start_time = datetime.now()
-
-        self.logger.info("=" * 80)
-        self.logger.info(f"Starting test: {self.test_name}")
-        self.logger.info(f"Test class: {self.__class__.__name__}")
-        self.logger.info(f"Start time: {self.test_start_time}")
-        self.logger.info("=" * 80)
-
-        # Add test information to Allure
-        allure.dynamic.title(self.test_name)
-        allure.dynamic.description(f"Test: {self.test_name}")
-        allure.dynamic.label("framework", "Hybrid Automation Framework")
-        allure.dynamic.label("test_class", self.__class__.__name__)
-
-        # Add environment info to Allure
-        self._add_allure_environment_info()
-
-        # Clear soft assertions for each test
-        self.soft_assertions = []
-
-        yield
-
-        # Check soft assertions
-        self._verify_soft_assertions()
-
-        # Teardown after test
-        self.cleanup_test()
-
-    def _add_allure_environment_info(self):
-        """Add environment information to Allure report"""
-        try:
-            with allure.step("Test Environment Information"):
-                env_info = (
-                    f"Environment: {ApplicationConstants.ENVIRONMENT}\n"
-                    f"Browser: {ApplicationConstants.BROWSER}\n"
-                    f"Base URL: {ApplicationConstants.BASE_URL}\n"
-                    f"API Base URL: {ApplicationConstants.API_BASE_URL}\n"
-                    f"Python Version: {os.sys.version.split()[0]}"
-                )
-                allure.attach(
-                    env_info,
-                    name="Environment Info",
-                    attachment_type=allure.attachment_type.TEXT
-                )
-        except Exception as e:
-            self.logger.warning(f"Could not add environment info to Allure: {e}")
-
-    # ========================================================================
-    # SETUP METHODS
-    # ========================================================================
-
-    def setup_browser(self, browser_type: str = None, headless: bool = None):
-        """
-        Setup browser for UI tests
-
-        Args:
-            browser_type: Browser type (chrome, firefox, safari, edge)
-            headless: Run browser in headless mode
-
-        Example:
-            self.setup_browser()
-            self.setup_browser(browser_type="firefox", headless=True)
+            Element text
         """
         try:
-            if not self.browser_utility:
-                self.browser_utility = BrowserUtility()
-
-            # Override with parameters if provided
-            if headless is not None:
-                self.config.config.set('browser', 'headless', str(headless))
-
-            self.browser_utility.initialize_browser(browser_type)
-            self.browser_utility.create_browser_context()
-            self.browser_utility.create_page()
-
-            self.logger.info(f"Browser setup completed: {browser_type or 'default'}")
-
-            with allure.step(f"Setup browser: {browser_type or 'default'}"):
-                pass
-
+            timeout = timeout or self.default_timeout
+            self.page.wait_for_selector(selector, timeout=timeout)
+            text = self.page.text_content(selector)
+            self.logger.info(f"Retrieved text from {selector}: {text}")
+            return text if text else ""
         except Exception as e:
-            self.logger.error(f"Browser setup failed: {e}")
-            self.take_screenshot("Browser_Setup_Failed")
+            self.logger.error(f"Get text failed on {selector}: {e}")
             raise
 
-    def setup_api_client(self, base_url: str = None):
+    def get_attribute(self, selector: str, attribute: str, timeout: int = None) -> Optional[str]:
         """
-        Setup API client for API tests
-
+        Get element attribute value
         Args:
-            base_url: Override default API base URL
-
-        Example:
-            self.setup_api_client()
-            self.setup_api_client(base_url="https://custom-api.com")
+            selector: Element selector
+            attribute: Attribute name
+            timeout: Maximum wait time
+        Returns:
+            Attribute value
         """
         try:
-            if not self.api_client:
-                self.api_client = APIClientUtility()
-
-            # Override base URL if provided
-            if base_url:
-                self.api_client.base_url = base_url
-
-            self.logger.info(f"API client setup completed: {self.api_client.base_url}")
-
-            with allure.step(f"Setup API client: {self.api_client.base_url}"):
-                pass
-
+            timeout = timeout or self.default_timeout
+            self.page.wait_for_selector(selector, timeout=timeout)
+            value = self.page.get_attribute(selector, attribute)
+            self.logger.info(f"Retrieved attribute '{attribute}' from {selector}: {value}")
+            return value
         except Exception as e:
-            self.logger.error(f"API client setup failed: {e}")
+            self.logger.error(f"Get attribute failed on {selector}: {e}")
             raise
 
-    def setup_test_data(self, data: Dict[str, Any]):
+    def get_all_texts(self, selector: str, timeout: int = None) -> List[str]:
         """
-        Setup test data for the test
-
+        Get text from all matching elements
         Args:
-            data: Test data dictionary
-
-        Example:
-            self.setup_test_data({"username": "test@example.com", "password": "pass123"})
+            selector: Element selector
+            timeout: Maximum wait time
+        Returns:
+            List of texts
         """
-        self.test_data = data
-        self.logger.info(f"Test data setup: {list(data.keys())}")
+        try:
+            timeout = timeout or self.default_timeout
+            self.page.wait_for_selector(selector, timeout=timeout)
+            elements = self.page.query_selector_all(selector)
+            texts = [element.text_content() for element in elements]
+            self.logger.info(f"Retrieved {len(texts)} texts from {selector}")
+            return texts
+        except Exception as e:
+            self.logger.error(f"Get all texts failed on {selector}: {e}")
+            raise
+
+    def get_element_count(self, selector: str) -> int:
+        """
+        Get count of matching elements
+        Args:
+            selector: Element selector
+        Returns:
+            Number of matching elements
+        """
+        try:
+            count = self.page.locator(selector).count()
+            self.logger.info(f"Found {count} elements matching {selector}")
+            return count
+        except Exception as e:
+            self.logger.error(f"Get element count failed on {selector}: {e}")
+            raise
 
     # ========================================================================
-    # CLEANUP METHODS
+    # ELEMENT STATE METHODS
     # ========================================================================
 
-    def cleanup_test(self):
-        """Cleanup method called after each test"""
-        test_end_time = datetime.now()
-        test_duration = (test_end_time - self.test_start_time).total_seconds()
+    def is_element_visible(self, selector: str, timeout: int = 5000) -> bool:
+        """
+        Check if element is visible
+        Args:
+            selector: Element selector
+            timeout: Maximum wait time
+        Returns:
+            True if visible, False otherwise
+        """
+        try:
+            self.page.wait_for_selector(selector, timeout=timeout, state="visible")
+            self.logger.info(f"Element is visible: {selector}")
+            return True
+        except:
+            self.logger.debug(f"Element not visible: {selector}")
+            return False
 
-        self.logger.info("=" * 80)
-        self.logger.info(f"Test completed: {self.test_name}")
-        self.logger.info(f"Duration: {test_duration:.2f} seconds")
-        self.logger.info("=" * 80)
+    def is_element_hidden(self, selector: str, timeout: int = 5000) -> bool:
+        """Check if element is hidden"""
+        try:
+            self.page.wait_for_selector(selector, timeout=timeout, state="hidden")
+            return True
+        except:
+            return False
 
-        # Close browser if initialized
-        if self.browser_utility:
-            try:
-                self.browser_utility.close_browser()
-                self.logger.info("Browser closed successfully")
-            except Exception as e:
-                self.logger.warning(f"Error closing browser: {e}")
+    def is_element_enabled(self, selector: str) -> bool:
+        """Check if element is enabled"""
+        try:
+            return self.page.is_enabled(selector)
+        except Exception as e:
+            self.logger.error(f"is_element_enabled failed on {selector}: {e}")
+            return False
 
-        # Log test duration to Allure
-        with allure.step(f"Test Duration: {test_duration:.2f}s"):
-            pass
+    def is_element_disabled(self, selector: str) -> bool:
+        """Check if element is disabled"""
+        try:
+            return self.page.is_disabled(selector)
+        except Exception as e:
+            self.logger.error(f"is_element_disabled failed on {selector}: {e}")
+            return False
+
+    def is_checkbox_checked(self, selector: str) -> bool:
+        """Check if checkbox is checked"""
+        try:
+            return self.page.is_checked(selector)
+        except Exception as e:
+            self.logger.error(f"is_checkbox_checked failed on {selector}: {e}")
+            return False
+
+    # ========================================================================
+    # WAIT METHODS
+    # ========================================================================
+
+    @allure.step("Wait for element: {selector}")
+    def wait_for_element(self, selector: str, timeout: int = None, state: str = "visible"):
+        """
+        Wait for element to be in specified state
+        Args:
+            selector: Element selector
+            timeout: Maximum wait time
+            state: Element state ('attached', 'detached', 'visible', 'hidden')
+        """
+        try:
+            timeout = timeout or self.default_timeout
+            self.page.wait_for_selector(selector, timeout=timeout, state=state)
+            self.logger.info(f"Element {selector} is {state}")
+        except Exception as e:
+            self.logger.error(f"Wait for element failed on {selector}: {e}")
+            raise
+
+    def wait_for_element_to_disappear(self, selector: str, timeout: int = None):
+        """Wait for element to disappear"""
+        try:
+            timeout = timeout or self.default_timeout
+            self.page.wait_for_selector(selector, timeout=timeout, state="hidden")
+            self.logger.info(f"Element disappeared: {selector}")
+        except Exception as e:
+            self.logger.error(f"Wait for element to disappear failed on {selector}: {e}")
+            raise
+
+    def wait_for_url(self, url: str, timeout: int = None):
+        """Wait for URL to match"""
+        try:
+            timeout = timeout or self.default_timeout
+            self.page.wait_for_url(url, timeout=timeout)
+            self.logger.info(f"URL matched: {url}")
+        except Exception as e:
+            self.logger.error(f"Wait for URL failed: {e}")
+            raise
+
+    def wait_for_page_load(self, timeout: int = None):
+        """Wait for page to load completely"""
+        try:
+            timeout = timeout or self.default_timeout
+            self.page.wait_for_load_state("networkidle", timeout=timeout)
+            self.logger.info("Page loaded completely")
+        except Exception as e:
+            self.logger.error(f"Wait for page load failed: {e}")
+            raise
+
+    # ========================================================================
+    # DROPDOWN/SELECT METHODS
+    # ========================================================================
+
+    @allure.step("Select dropdown option: {value}")
+    def select_dropdown_by_value(self, selector: str, value: str):
+        """Select option from dropdown by value"""
+        try:
+            self.page.select_option(selector, value=value)
+            self.logger.info(f"Selected option by value '{value}' from {selector}")
+        except Exception as e:
+            self.logger.error(f"Select dropdown failed on {selector}: {e}")
+            raise
+
+    def select_dropdown_by_label(self, selector: str, label: str):
+        """Select option from dropdown by visible text"""
+        try:
+            self.page.select_option(selector, label=label)
+            self.logger.info(f"Selected option by label '{label}' from {selector}")
+        except Exception as e:
+            self.logger.error(f"Select dropdown failed on {selector}: {e}")
+            raise
+
+    def select_dropdown_by_index(self, selector: str, index: int):
+        """Select option from dropdown by index"""
+        try:
+            self.page.select_option(selector, index=index)
+            self.logger.info(f"Selected option by index {index} from {selector}")
+        except Exception as e:
+            self.logger.error(f"Select dropdown failed on {selector}: {e}")
+            raise
+
+    # ========================================================================
+    # CHECKBOX/RADIO METHODS
+    # ========================================================================
+
+    @allure.step("Check checkbox: {selector}")
+    def check_checkbox(self, selector: str):
+        """Check checkbox if not already checked"""
+        try:
+            if not self.page.is_checked(selector):
+                self.page.check(selector)
+                self.logger.info(f"Checked checkbox: {selector}")
+            else:
+                self.logger.info(f"Checkbox already checked: {selector}")
+        except Exception as e:
+            self.logger.error(f"Check checkbox failed on {selector}: {e}")
+            raise
+
+    @allure.step("Uncheck checkbox: {selector}")
+    def uncheck_checkbox(self, selector: str):
+        """Uncheck checkbox if checked"""
+        try:
+            if self.page.is_checked(selector):
+                self.page.uncheck(selector)
+                self.logger.info(f"Unchecked checkbox: {selector}")
+            else:
+                self.logger.info(f"Checkbox already unchecked: {selector}")
+        except Exception as e:
+            self.logger.error(f"Uncheck checkbox failed on {selector}: {e}")
+            raise
+
+    # ========================================================================
+    # SCROLL METHODS
+    # ========================================================================
+
+    @allure.step("Scroll to element: {selector}")
+    def scroll_to_element(self, selector: str):
+        """Scroll to element"""
+        try:
+            self.page.locator(selector).scroll_into_view_if_needed()
+            self.logger.info(f"Scrolled to element: {selector}")
+        except Exception as e:
+            self.logger.error(f"Scroll to element failed on {selector}: {e}")
+            raise
+
+    def scroll_to_top(self):
+        """Scroll to top of page"""
+        try:
+            self.page.evaluate("window.scrollTo(0, 0)")
+            self.logger.info("Scrolled to top of page")
+        except Exception as e:
+            self.logger.error(f"Scroll to top failed: {e}")
+            raise
+
+    def scroll_to_bottom(self):
+        """Scroll to bottom of page"""
+        try:
+            self.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            self.logger.info("Scrolled to bottom of page")
+        except Exception as e:
+            self.logger.error(f"Scroll to bottom failed: {e}")
+            raise
+
+    def scroll_by_amount(self, x: int, y: int):
+        """
+        Scroll by specified amount
+        Args:
+            x: Horizontal scroll amount
+            y: Vertical scroll amount
+        """
+        try:
+            self.page.evaluate(f"window.scrollBy({x}, {y})")
+            self.logger.info(f"Scrolled by x={x}, y={y}")
+        except Exception as e:
+            self.logger.error(f"Scroll by amount failed: {e}")
+            raise
+
+    # ========================================================================
+    # FRAME/IFRAME METHODS
+    # ========================================================================
+
+    def switch_to_frame(self, frame_selector: str):
+        """Switch to iframe"""
+        try:
+            frame = self.page.frame_locator(frame_selector)
+            self.logger.info(f"Switched to frame: {frame_selector}")
+            return frame
+        except Exception as e:
+            self.logger.error(f"Switch to frame failed: {e}")
+            raise
+
+    def switch_to_default_content(self):
+        """Switch back to main content"""
+        try:
+            # In Playwright, this is handled automatically
+            self.logger.info("Switched to default content")
+        except Exception as e:
+            self.logger.error(f"Switch to default content failed: {e}")
+            raise
+
+    # ========================================================================
+    # JAVASCRIPT EXECUTION METHODS
+    # ========================================================================
+
+    def execute_javascript(self, script: str, *args) -> Any:
+        """
+        Execute JavaScript on page
+        Args:
+            script: JavaScript code to execute
+            *args: Arguments to pass to the script
+        Returns:
+            Script execution result
+        """
+        try:
+            result = self.page.evaluate(script, *args)
+            self.logger.info(f"Executed JavaScript: {script[:50]}...")
+            return result
+        except Exception as e:
+            self.logger.error(f"JavaScript execution failed: {e}")
+            raise
+
+    def highlight_element(self, selector: str):
+        """Highlight element (useful for debugging)"""
+        try:
+            script = """
+            (selector) => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    element.style.border = '3px solid red';
+                    element.style.backgroundColor = 'yellow';
+                }
+            }
+            """
+            self.page.evaluate(script, selector)
+            self.logger.info(f"Highlighted element: {selector}")
+        except Exception as e:
+            self.logger.error(f"Highlight element failed: {e}")
+
+    # ========================================================================
+    # ALERT/DIALOG METHODS
+    # ========================================================================
+
+    def accept_alert(self):
+        """Accept alert dialog"""
+        try:
+            self.page.on("dialog", lambda dialog: dialog.accept())
+            self.logger.info("Alert accepted")
+        except Exception as e:
+            self.logger.error(f"Accept alert failed: {e}")
+            raise
+
+    def dismiss_alert(self):
+        """Dismiss alert dialog"""
+        try:
+            self.page.on("dialog", lambda dialog: dialog.dismiss())
+            self.logger.info("Alert dismissed")
+        except Exception as e:
+            self.logger.error(f"Dismiss alert failed: {e}")
+            raise
+
+    def get_alert_text(self) -> str:
+        """Get alert text"""
+        alert_text = ""
+
+        def handle_dialog(dialog):
+            nonlocal alert_text
+            alert_text = dialog.message
+            dialog.accept()
+
+        self.page.on("dialog", handle_dialog)
+        return alert_text
+
+    # ========================================================================
+    # PAGE INFORMATION METHODS
+    # ========================================================================
+
+    def get_page_title(self) -> str:
+        """Get page title"""
+        try:
+            title = self.page.title()
+            self.logger.info(f"Page title: {title}")
+            return title
+        except Exception as e:
+            self.logger.error(f"Get page title failed: {e}")
+            raise
+
+    def get_current_url(self) -> str:
+        """Get current URL"""
+        try:
+            url = self.page.url
+            self.logger.info(f"Current URL: {url}")
+            return url
+        except Exception as e:
+            self.logger.error(f"Get current URL failed: {e}")
+            raise
+
+    def get_page_source(self) -> str:
+        """Get page HTML source"""
+        try:
+            source = self.page.content()
+            self.logger.info("Retrieved page source")
+            return source
+        except Exception as e:
+            self.logger.error(f"Get page source failed: {e}")
+            raise
 
     # ========================================================================
     # SCREENSHOT METHODS
     # ========================================================================
 
-    def take_screenshot(self, description: str = "Screenshot"):
+    def take_screenshot(self, filename: str = None) -> str:
         """
-        Take screenshot and attach to Allure report
-
+        Take screenshot
         Args:
-            description: Description for the screenshot
-
-        Example:
-            self.take_screenshot("Login Page")
-            self.take_screenshot("After Button Click")
-        """
-        if self.browser_utility and self.browser_utility.page:
-            try:
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                filename = f"{self.test_name}_{description}_{timestamp}.png"
-                screenshot_path = self.browser_utility.take_screenshot(filename=filename)
-
-                # Attach to Allure
-                allure.attach.file(
-                    screenshot_path,
-                    name=description,
-                    attachment_type=allure.attachment_type.PNG
-                )
-
-                self.logger.info(f"Screenshot captured: {description}")
-
-            except Exception as e:
-                self.logger.error(f"Failed to take screenshot: {e}")
-        else:
-            self.logger.warning("Browser not initialized, cannot take screenshot")
-
-    def take_screenshot_on_failure(self):
-        """Take screenshot when test fails (called automatically)"""
-        self.take_screenshot("Test_Failure")
-
-    # ========================================================================
-    # LOGGING AND REPORTING METHODS
-    # ========================================================================
-
-    def log_test_step(self, step_description: str):
-        """
-        Log test step with Allure
-
-        Args:
-            step_description: Description of the test step
-
-        Example:
-            self.log_test_step("Step 1: Navigate to login page")
-            self.log_test_step("Step 2: Enter credentials")
-        """
-        self.logger.info(f"TEST STEP: {step_description}")
-        with allure.step(step_description):
-            pass
-
-    def attach_text_to_report(self, text: str, name: str = "Additional Info"):
-        """
-        Attach text to Allure report
-
-        Args:
-            text: Text to attach
-            name: Name of the attachment
-
-        Example:
-            self.attach_text_to_report("User ID: 12345", "User Information")
-        """
-        allure.attach(
-            text,
-            name=name,
-            attachment_type=allure.attachment_type.TEXT
-        )
-        self.logger.debug(f"Attached text to report: {name}")
-
-    def attach_json_to_report(self, data: Dict, name: str = "JSON Data"):
-        """
-        Attach JSON data to Allure report
-
-        Args:
-            data: Dictionary to attach
-            name: Name of the attachment
-
-        Example:
-            self.attach_json_to_report({"user": "john", "age": 30}, "User Data")
-        """
-        import json
-        allure.attach(
-            json.dumps(data, indent=2),
-            name=name,
-            attachment_type=allure.attachment_type.JSON
-        )
-        self.logger.debug(f"Attached JSON to report: {name}")
-
-    def attach_file_to_report(self, file_path: str, name: str = "File"):
-        """
-        Attach file to Allure report
-
-        Args:
-            file_path: Path to file
-            name: Name of the attachment
-
-        Example:
-            self.attach_file_to_report("test_data/sample.pdf", "Sample Document")
+            filename: Screenshot filename
+        Returns:
+            Path to screenshot
         """
         try:
-            allure.attach.file(
-                file_path,
-                name=name,
-                attachment_type=allure.attachment_type.TEXT
-            )
-            self.logger.debug(f"Attached file to report: {name}")
+            screenshot_path = self.browser_utility.take_screenshot(filename)
+            return screenshot_path
         except Exception as e:
-            self.logger.error(f"Failed to attach file: {e}")
-
-    # ========================================================================
-    # ASSERTION METHODS
-    # ========================================================================
-
-    def assert_equals(self, actual: Any, expected: Any, message: str = ""):
-        """
-        Assert that two values are equal
-
-        Args:
-            actual: Actual value
-            expected: Expected value
-            message: Custom assertion message
-
-        Example:
-            self.assert_equals(page_title, "Home", "Page title should be Home")
-        """
-        try:
-            assert actual == expected, \
-                f"{message}. Expected: '{expected}', Actual: '{actual}'"
-
-            self.logger.info(f"✓ Assertion passed: {actual} == {expected}")
-
-            with allure.step(f"Assert equals: {actual} == {expected}"):
-                pass
-
-        except AssertionError as e:
-            self.logger.error(f"✗ Assertion failed: {e}")
-            self.take_screenshot("Assertion_Failed")
+            self.logger.error(f"Take screenshot failed: {e}")
             raise
 
-    def assert_not_equals(self, actual: Any, expected: Any, message: str = ""):
-        """
-        Assert that two values are not equal
-
-        Args:
-            actual: Actual value
-            expected: Expected value
-            message: Custom assertion message
-
-        Example:
-            self.assert_not_equals(status_code, 404, "Should not return 404")
-        """
+    def take_element_screenshot(self, selector: str, filename: str = None) -> str:
+        """Take screenshot of specific element"""
         try:
-            assert actual != expected, \
-                f"{message}. Both values are: '{actual}'"
-
-            self.logger.info(f"✓ Assertion passed: {actual} != {expected}")
-
-            with allure.step(f"Assert not equals: {actual} != {expected}"):
-                pass
-
-        except AssertionError as e:
-            self.logger.error(f"✗ Assertion failed: {e}")
-            self.take_screenshot("Assertion_Failed")
-            raise
-
-    def assert_true(self, condition: bool, message: str = ""):
-        """
-        Assert that condition is true
-
-        Args:
-            condition: Boolean condition
-            message: Custom assertion message
-
-        Example:
-            self.assert_true(user.is_logged_in(), "User should be logged in")
-        """
-        try:
-            assert condition is True, \
-                f"{message}. Condition evaluated to False"
-
-            self.logger.info(f"✓ Assertion passed: Condition is True")
-
-            with allure.step(f"Assert True: {message}"):
-                pass
-
-        except AssertionError as e:
-            self.logger.error(f"✗ Assertion failed: {e}")
-            self.take_screenshot("Assertion_Failed")
-            raise
-
-    def assert_false(self, condition: bool, message: str = ""):
-        """
-        Assert that condition is false
-
-        Args:
-            condition: Boolean condition
-            message: Custom assertion message
-
-        Example:
-            self.assert_false(error_displayed, "No error should be displayed")
-        """
-        try:
-            assert condition is False, \
-                f"{message}. Condition evaluated to True"
-
-            self.logger.info(f"✓ Assertion passed: Condition is False")
-
-            with allure.step(f"Assert False: {message}"):
-                pass
-
-        except AssertionError as e:
-            self.logger.error(f"✗ Assertion failed: {e}")
-            self.take_screenshot("Assertion_Failed")
-            raise
-
-    def assert_in(self, item: Any, container: Any, message: str = ""):
-        """
-        Assert that item is in container
-
-        Args:
-            item: Item to check
-            container: Container (list, string, dict, etc.)
-            message: Custom assertion message
-
-        Example:
-            self.assert_in("apple", fruits_list, "Apple should be in the list")
-            self.assert_in("error", error_message, "Message should contain 'error'")
-        """
-        try:
-            assert item in container, \
-                f"{message}. '{item}' not found in '{container}'"
-
-            self.logger.info(f"✓ Assertion passed: '{item}' in container")
-
-            with allure.step(f"Assert '{item}' in container"):
-                pass
-
-        except AssertionError as e:
-            self.logger.error(f"✗ Assertion failed: {e}")
-            self.take_screenshot("Assertion_Failed")
-            raise
-
-    def assert_not_in(self, item: Any, container: Any, message: str = ""):
-        """
-        Assert that item is not in container
-
-        Args:
-            item: Item to check
-            container: Container (list, string, dict, etc.)
-            message: Custom assertion message
-
-        Example:
-            self.assert_not_in("inactive", status_list, "Inactive should not be present")
-        """
-        try:
-            assert item not in container, \
-                f"{message}. '{item}' found in '{container}'"
-
-            self.logger.info(f"✓ Assertion passed: '{item}' not in container")
-
-            with allure.step(f"Assert '{item}' not in container"):
-                pass
-
-        except AssertionError as e:
-            self.logger.error(f"✗ Assertion failed: {e}")
-            self.take_screenshot("Assertion_Failed")
-            raise
-
-    def assert_is_none(self, value: Any, message: str = ""):
-        """
-        Assert that value is None
-
-        Args:
-            value: Value to check
-            message: Custom assertion message
-
-        Example:
-            self.assert_is_none(error, "Error should be None")
-        """
-        try:
-            assert value is None, \
-                f"{message}. Value is not None: '{value}'"
-
-            self.logger.info(f"✓ Assertion passed: Value is None")
-
-            with allure.step("Assert value is None"):
-                pass
-
-        except AssertionError as e:
-            self.logger.error(f"✗ Assertion failed: {e}")
-            self.take_screenshot("Assertion_Failed")
-            raise
-
-    def assert_is_not_none(self, value: Any, message: str = ""):
-        """
-        Assert that value is not None
-
-        Args:
-            value: Value to check
-            message: Custom assertion message
-
-        Example:
-            self.assert_is_not_none(user_id, "User ID should not be None")
-        """
-        try:
-            assert value is not None, \
-                f"{message}. Value is None"
-
-            self.logger.info(f"✓ Assertion passed: Value is not None")
-
-            with allure.step("Assert value is not None"):
-                pass
-
-        except AssertionError as e:
-            self.logger.error(f"✗ Assertion failed: {e}")
-            self.take_screenshot("Assertion_Failed")
-            raise
-
-    def assert_greater_than(self, actual: Any, expected: Any, message: str = ""):
-        """
-        Assert that actual is greater than expected
-
-        Args:
-            actual: Actual value
-            expected: Expected value
-            message: Custom assertion message
-
-        Example:
-            self.assert_greater_than(score, 50, "Score should be greater than 50")
-        """
-        try:
-            assert actual > expected, \
-                f"{message}. {actual} is not greater than {expected}"
-
-            self.logger.info(f"✓ Assertion passed: {actual} > {expected}")
-
-            with allure.step(f"Assert {actual} > {expected}"):
-                pass
-
-        except AssertionError as e:
-            self.logger.error(f"✗ Assertion failed: {e}")
-            self.take_screenshot("Assertion_Failed")
-            raise
-
-    def assert_less_than(self, actual: Any, expected: Any, message: str = ""):
-        """
-        Assert that actual is less than expected
-
-        Args:
-            actual: Actual value
-            expected: Expected value
-            message: Custom assertion message
-
-        Example:
-            self.assert_less_than(response_time, 2.0, "Response time should be under 2s")
-        """
-        try:
-            assert actual < expected, \
-                f"{message}. {actual} is not less than {expected}"
-
-            self.logger.info(f"✓ Assertion passed: {actual} < {expected}")
-
-            with allure.step(f"Assert {actual} < {expected}"):
-                pass
-
-        except AssertionError as e:
-            self.logger.error(f"✗ Assertion failed: {e}")
-            self.take_screenshot("Assertion_Failed")
-            raise
-
-    def assert_greater_or_equal(self, actual: Any, expected: Any, message: str = ""):
-        """Assert that actual is greater than or equal to expected"""
-        try:
-            assert actual >= expected, \
-                f"{message}. {actual} is not greater than or equal to {expected}"
-            self.logger.info(f"✓ Assertion passed: {actual} >= {expected}")
-        except AssertionError as e:
-            self.logger.error(f"✗ Assertion failed: {e}")
-            self.take_screenshot("Assertion_Failed")
-            raise
-
-    def assert_less_or_equal(self, actual: Any, expected: Any, message: str = ""):
-        """Assert that actual is less than or equal to expected"""
-        try:
-            assert actual <= expected, \
-                f"{message}. {actual} is not less than or equal to {expected}"
-            self.logger.info(f"✓ Assertion passed: {actual} <= {expected}")
-        except AssertionError as e:
-            self.logger.error(f"✗ Assertion failed: {e}")
-            self.take_screenshot("Assertion_Failed")
-            raise
-
-    def assert_contains(self, text: str, substring: str, message: str = ""):
-        """
-        Assert that text contains substring
-
-        Args:
-            text: Text to search in
-            substring: Substring to find
-            message: Custom assertion message
-
-        Example:
-            self.assert_contains(page_content, "Welcome", "Page should contain Welcome")
-        """
-        try:
-            assert substring in text, \
-                f"{message}. '{substring}' not found in '{text}'"
-
-            self.logger.info(f"✓ Assertion passed: Text contains '{substring}'")
-
-            with allure.step(f"Assert text contains '{substring}'"):
-                pass
-
-        except AssertionError as e:
-            self.logger.error(f"✗ Assertion failed: {e}")
-            self.take_screenshot("Assertion_Failed")
-            raise
-
-    def assert_starts_with(self, text: str, prefix: str, message: str = ""):
-        """Assert that text starts with prefix"""
-        try:
-            assert text.startswith(prefix), \
-                f"{message}. Text '{text}' does not start with '{prefix}'"
-            self.logger.info(f"✓ Assertion passed: Text starts with '{prefix}'")
-        except AssertionError as e:
-            self.logger.error(f"✗ Assertion failed: {e}")
-            self.take_screenshot("Assertion_Failed")
-            raise
-
-    def assert_ends_with(self, text: str, suffix: str, message: str = ""):
-        """Assert that text ends with suffix"""
-        try:
-            assert text.endswith(suffix), \
-                f"{message}. Text '{text}' does not end with '{suffix}'"
-            self.logger.info(f"✓ Assertion passed: Text ends with '{suffix}'")
-        except AssertionError as e:
-            self.logger.error(f"✗ Assertion failed: {e}")
-            self.take_screenshot("Assertion_Failed")
-            raise
-
-    def assert_list_equals(self, actual: List, expected: List, message: str = ""):
-        """
-        Assert that two lists are equal
-
-        Args:
-            actual: Actual list
-            expected: Expected list
-            message: Custom assertion message
-
-        Example:
-            self.assert_list_equals([1,2,3], [1,2,3], "Lists should match")
-        """
-        try:
-            assert actual == expected, \
-                f"{message}. Lists are not equal.\nExpected: {expected}\nActual: {actual}"
-
-            self.logger.info(f"✓ Assertion passed: Lists are equal")
-
-            with allure.step("Assert lists are equal"):
-                pass
-
-        except AssertionError as e:
-            self.logger.error(f"✗ Assertion failed: {e}")
-            self.take_screenshot("Assertion_Failed")
-            raise
-
-    def assert_dict_equals(self, actual: Dict, expected: Dict, message: str = ""):
-        """Assert that two dictionaries are equal"""
-        try:
-            assert actual == expected, \
-                f"{message}. Dictionaries are not equal.\nExpected: {expected}\nActual: {actual}"
-            self.logger.info(f"✓ Assertion passed: Dictionaries are equal")
-        except AssertionError as e:
-            self.logger.error(f"✗ Assertion failed: {e}")
-            self.take_screenshot("Assertion_Failed")
-            raise
-
-    def assert_length(self, container: Any, expected_length: int, message: str = ""):
-        """
-        Assert container has expected length
-
-        Args:
-            container: Container (list, string, etc.)
-            expected_length: Expected length
-            message: Custom assertion message
-
-        Example:
-            self.assert_length(user_list, 10, "Should have 10 users")
-        """
-        try:
-            actual_length = len(container)
-            assert actual_length == expected_length, \
-                f"{message}. Expected length {expected_length}, got {actual_length}"
-            self.logger.info(f"✓ Assertion passed: Length is {expected_length}")
-        except AssertionError as e:
-            self.logger.error(f"✗ Assertion failed: {e}")
-            self.take_screenshot("Assertion_Failed")
+            import os
+            from datetime import datetime
+
+            if not filename:
+                filename = f"element_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+
+            screenshot_path = f"screenshots/{filename}"
+            os.makedirs(os.path.dirname(screenshot_path), exist_ok=True)
+
+            self.page.locator(selector).screenshot(path=screenshot_path)
+            self.logger.info(f"Element screenshot saved: {screenshot_path}")
+            return screenshot_path
+        except Exception as e:
+            self.logger.error(f"Take element screenshot failed: {e}")
             raise
 
     # ========================================================================
-    # SOFT ASSERTION METHODS
+    # HOVER METHODS
     # ========================================================================
 
-    def soft_assert_equals(self, actual: Any, expected: Any, message: str = ""):
+    @allure.step("Hover over element: {selector}")
+    def hover(self, selector: str, timeout: int = None):
+        """Hover over element"""
+        try:
+            timeout = timeout or self.default_timeout
+            self.page.wait_for_selector(selector, timeout=timeout)
+            self.page.hover(selector)
+            self.logger.info(f"Hovered over element: {selector}")
+        except Exception as e:
+            self.logger.error(f"Hover failed on {selector}: {e}")
+            raise
+
+    # ========================================================================
+    # DRAG AND DROP METHODS
+    # ========================================================================
+
+    @allure.step("Drag and drop from {source_selector} to {target_selector}")
+    def drag_and_drop(self, source_selector: str, target_selector: str):
+        """Drag and drop element"""
+        try:
+            self.page.drag_and_drop(source_selector, target_selector)
+            self.logger.info(f"Dragged {source_selector} to {target_selector}")
+        except Exception as e:
+            self.logger.error(f"Drag and drop failed: {e}")
+            raise
+
+    # ========================================================================
+    # FILE UPLOAD METHODS
+    # ========================================================================
+
+    @allure.step("Upload file: {file_path}")
+    def upload_file(self, selector: str, file_path: str):
         """
-        Soft assertion - logs failure but doesn't stop execution
-
+        Upload file
         Args:
-            actual: Actual value
-            expected: Expected value
-            message: Custom assertion message
-
-        Example:
-            self.soft_assert_equals(color, "red", "Color should be red")
+            selector: File input selector
+            file_path: Path to file to upload
         """
         try:
-            assert actual == expected, \
-                f"{message}. Expected: '{expected}', Actual: '{actual}'"
-            self.logger.info(f"✓ Soft assertion passed: {actual} == {expected}")
-        except AssertionError as e:
-            error_msg = f"Soft assertion failed: {e}"
-            self.logger.warning(f"⚠ {error_msg}")
-            self.soft_assertions.append(error_msg)
-            self.take_screenshot("Soft_Assertion_Failed")
+            self.page.set_input_files(selector, file_path)
+            self.logger.info(f"Uploaded file: {file_path}")
+        except Exception as e:
+            self.logger.error(f"File upload failed: {e}")
+            raise
 
-    def soft_assert_true(self, condition: bool, message: str = ""):
-        """Soft assert that condition is true"""
+    def upload_multiple_files(self, selector: str, file_paths: List[str]):
+        """Upload multiple files"""
         try:
-            assert condition is True, f"{message}. Condition evaluated to False"
-            self.logger.info(f"✓ Soft assertion passed: Condition is True")
-        except AssertionError as e:
-            error_msg = f"Soft assertion failed: {e}"
-            self.logger.warning(f"⚠ {error_msg}")
-            self.soft_assertions.append(error_msg)
-            self.take_screenshot("Soft_Assertion_Failed")
-
-    def _verify_soft_assertions(self):
-        """Verify all soft assertions at the end of test"""
-        if self.soft_assertions:
-            error_summary = "\n".join([f"  - {error}" for error in self.soft_assertions])
-            self.logger.error(f"Test had {len(self.soft_assertions)} soft assertion failures:\n{error_summary}")
-            raise AssertionError(f"Test had {len(self.soft_assertions)} soft assertion failures:\n{error_summary}")
+            self.page.set_input_files(selector, file_paths)
+            self.logger.info(f"Uploaded {len(file_paths)} files")
+        except Exception as e:
+            self.logger.error(f"Multiple file upload failed: {e}")
+            raise
 
     # ========================================================================
-    # WAIT AND RETRY METHODS
+    # COOKIE METHODS
     # ========================================================================
 
-    def wait_for_condition(self, condition_func: Callable, timeout: int = 30,
-                           poll_frequency: float = 0.5, message: str = "") -> bool:
-        """
-        Wait for a condition to become true
+    def get_cookies(self) -> List[Dict]:
+        """Get all cookies"""
+        try:
+            cookies = self.page.context.cookies()
+            self.logger.info(f"Retrieved {len(cookies)} cookies")
+            return cookies
+        except Exception as e:
+            self.logger.error(f"Get cookies failed: {e}")
+            raise
 
+    def add_cookie(self, cookie: Dict):
+        """Add cookie"""
+        try:
+            self.page.context.add_cookies([cookie])
+            self.logger.info(f"Added cookie: {cookie.get('name')}")
+        except Exception as e:
+            self.logger.error(f"Add cookie failed: {e}")
+            raise
+
+    def clear_cookies(self):
+        """Clear all cookies"""
+        try:
+            self.page.context.clear_cookies()
+            self.logger.info("Cleared all cookies")
+        except Exception as e:
+            self.logger.error(f"Clear cookies failed: {e}")
+            raise
+
+    # ========================================================================
+    # UTILITY METHODS
+    # ========================================================================
+
+    def wait(self, seconds: int):
+        """
+        Wait for specified seconds
         Args:
-            condition_func: Function that returns boolean
-            timeout: Maximum wait time in seconds
-            poll_frequency: How often to check condition
-            message: Custom message for timeout
-
-        Returns:
-            True if condition met
-
-        Raises:
-            TimeoutError: If condition not met within timeout
-
-        Example:
-            self.wait_for_condition(
-                lambda: self.page.is_element_visible("div.content"),
-                timeout=10,
-                message="Waiting for content to be visible"
-            )
+            seconds: Number of seconds to wait
         """
-        import time
+        time.sleep(seconds)
+        self.logger.info(f"Waited for {seconds} seconds")
 
-        start_time = time.time()
+    def get_viewport_size(self) -> Dict[str, int]:
+        """Get viewport size"""
+        try:
+            size = self.page.viewport_size
+            self.logger.info(f"Viewport size: {size}")
+            return size
+        except Exception as e:
+            self.logger.error(f"Get viewport size failed: {e}")
+            raise
 
-        while time.time() - start_time < timeout:
-            try:
-                if condition_func():
-                    self.logger.info(f"✓ Condition met: {message}")
-                    return True
-            except Exception as e:
-                self.logger.debug(f"Condition check failed: {e}")
-
-            time.sleep(poll_frequency)
-
-        error_msg = f"Timeout waiting for condition: {message}"
-        self.logger.error(error_msg)
-        self.take_screenshot("Wait_Timeout")
-        raise TimeoutError(error_msg)
-
-    def retry_on_exception(self, func: Callable, max_attempts: int = 3,
-                           delay: int = 2, exceptions: tuple = (Exception,)) -> Any:
-        """
-        Retry function on exception
-
-        Args:
-            func: Function to execute
-            max_attempts: Maximum number of attempts
-            delay: Delay between attempts
-            exceptions: Tuple of exceptions to catch
-
-        Returns:
-            Function result
-
-        Example:
-            result = self.retry_on_exception(
-                lambda: api_client.get_user(user_id),
-                max_attempts=3,
-                delay=1
-            )
-        """
-        import time
-
-        for attempt in range(1, max_attempts + 1):
-            try:
-                return func()
-            except exceptions as e:
-                if attempt == max_attempts:
-                    self.logger.error(f"All {max_attempts} attempts failed")
-                    raise
-                self.logger.warning(f"Attempt {attempt} failed: {e}. Retrying...")
-                time.sleep(delay)
-
-# ============================================================================
-# END OF BASE TEST CLASS
-# ============================================================================
+    def set_viewport_size(self, width: int, height: int):
+        """Set viewport size"""
+        try:
+            self.page.set_viewport_size({"width": width, "height": height})
+            self.logger.info(f"Set viewport size to {width}x{height}")
+        except Exception as e:
+            self.logger.error(f"Set viewport size failed: {e}")
+            raise
