@@ -22,11 +22,23 @@ class ConfigReader:
         self._load_environment_config()
 
     def _load_config(self):
-        """Load main configuration file"""
+        """Load configuration with flexible parsing"""
         if os.path.exists(self.config_file):
-            self.config.read(self.config_file)
+            # Try standard INI parsing first
+            try:
+                self.config.read(self.config_file)
+            except:
+                # Fallback to properties format
+                self._load_properties_file()
         else:
             raise FileNotFoundError(f"Configuration file not found: {self.config_file}")
+
+    def _load_properties_file(self):
+        """Load Java-style properties file"""
+        with open(self.config_file, 'r') as f:
+            # Create a default section
+            content = '[DEFAULT]\n' + f.read()
+            self.config.read_string(content)
 
     def _load_environment_config(self):
         """Load environment specific configuration"""
