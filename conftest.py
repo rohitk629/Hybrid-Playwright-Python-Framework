@@ -9,7 +9,7 @@ from datetime import datetime
 import os
 
 # Configure pytest plugins
-pytest_plugins = []
+# pytest_plugins = []
 
 
 @pytest.fixture(scope="session")
