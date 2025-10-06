@@ -9,7 +9,7 @@ from datetime import datetime
 import os
 
 # Configure pytest plugins
-pytest_plugins = []
+# pytest_plugins = []
 
 
 @pytest.fixture(scope="session")
@@ -139,3 +139,4 @@ def pytest_runtest_setup(item):
         allure.dynamic.label("priority", "Medium")
     else:
         allure.dynamic.label("priority", "Low")
+
