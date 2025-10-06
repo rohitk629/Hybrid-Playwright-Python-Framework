@@ -139,3 +139,4 @@ def pytest_runtest_setup(item):
         allure.dynamic.label("priority", "Medium")
     else:
         allure.dynamic.label("priority", "Low")
+
