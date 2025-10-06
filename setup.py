@@ -8,6 +8,6 @@ setup(
         # Read from requirements.txt
     ],
     python_requires=">=3.9",
-    author="QA Team",
+    author="Rohit Kumar",
     description="Hybrid Test Automation Framework",
 )

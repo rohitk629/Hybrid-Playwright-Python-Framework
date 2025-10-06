@@ -1,0 +1,18 @@
+[32mINFO    [0m TestLogin:base_test.py:230 TEST STEP: Step 1: Enter valid username
+[32mINFO    [0m LoginPage:base_page.py:141 Entered text in #user-name
+[32mINFO    [0m TestLogin:base_test.py:230 TEST STEP: Step 2: Enter valid password
+[32mINFO    [0m LoginPage:base_page.py:141 Entered text in #password
+[32mINFO    [0m TestLogin:base_test.py:230 TEST STEP: Step 3: Click login button
+[32mINFO    [0m LoginPage:base_page.py:93 Clicked on element: #login-button
+[32mINFO    [0m TestLogin:base_test.py:230 TEST STEP: Step 4: Verify successful login
+[32mINFO    [0m LoginPage:base_page.py:576 Current URL: https://www.saucedemo.com/inventory.html
+[32mINFO    [0m TestLogin:base_test.py:363 [PASS] Assertion passed: 'inventory.html' in container
+[32mINFO    [0m TestLogin:base_test.py:174 ================================================================================
+[32mINFO    [0m TestLogin:base_test.py:175 Test completed: test_successful_login
+[32mINFO    [0m TestLogin:base_test.py:176 Duration: 2.16 seconds
+[32mINFO    [0m TestLogin:base_test.py:177 ================================================================================
+[32mINFO    [0m core.utils.browser_utility:browser_utility.py:267 Page closed
+[32mINFO    [0m core.utils.browser_utility:browser_utility.py:271 Context closed
+[32mINFO    [0m core.utils.browser_utility:browser_utility.py:275 Browser closed
+[32mINFO    [0m core.utils.browser_utility:browser_utility.py:279 Playwright stopped
+[32mINFO    [0m TestLogin:base_test.py:183 Browser closed successfully

@@ -34,7 +34,8 @@ class JSONUtility:
             base_path: Base path for JSON files. Defaults to test_data/json/
         """
         if base_path is None:
-            self.base_path = Path(__file__).parent.parent.parent.parent.parent.parent / "test_data" / "json"
+            # Use relative path within project directory
+            self.base_path = Path.cwd() / "test_data" / "json"
         else:
             self.base_path = Path(base_path)
 
@@ -1200,7 +1201,7 @@ class JSONUtility:
 
             # Save to file if specified
             if output_file:
-                csv_path = self.base_path.parent / "csv" / output_file
+                csv_path = Path.cwd() / "test_data" / "csv" / output_file
                 csv_path.parent.mkdir(parents=True, exist_ok=True)
                 with open(csv_path, 'w', newline='', encoding='utf-8') as f:
                     f.write(csv_string)
@@ -1433,3 +1434,32 @@ class JSONUtility:
         except Exception as e:
             logger.error(f"Error getting statistics: {str(e)}")
             return {}
+
+    def convert_to_json_string(self, data: Union[Dict, List], indent: int = 4,
+                               ensure_ascii: bool = False, sort_keys: bool = False) -> str:
+        """
+        Convert data to JSON string (alias for to_json_string)
+
+        Args:
+            data: Data to convert
+            indent: JSON indentation
+            ensure_ascii: Escape non-ASCII characters
+            sort_keys: Sort dictionary keys
+
+        Returns:
+            JSON string
+        """
+        return self.to_json_string(data, indent, ensure_ascii, sort_keys)
+
+    def read_json_file(self, file_name: str, encoding: str = 'utf-8') -> Union[Dict, List]:
+        """
+        Read JSON file (alias for read_json)
+
+        Args:
+            file_name: Name of the JSON file
+            encoding: File encoding (default: utf-8)
+
+        Returns:
+            Parsed JSON data (dict or list)
+        """
+        return self.read_json(file_name, encoding)

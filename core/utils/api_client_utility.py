@@ -1101,536 +1101,595 @@ class APIClientUtility:
         self.response_log = []
         logger.info("Request and response logs cleared")
 
-        def save_response_to_file(self, file_path: str, response: requests.Response = None) -> None:
-            """
-            Save response to file
+    def save_response_to_file(self, file_path: str, response: requests.Response = None) -> None:
+        """
+        Save response to file
 
-            Args:
-                file_path: Path to save file
-                response: Response object (uses last response if None)
-            """
-            try:
-                resp = response if response else self.response
+        Args:
+            file_path: Path to save file
+            response: Response object (uses last response if None)
+        """
+        try:
+            resp = response if response else self.response
 
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    if resp.headers.get('Content-Type', '').startswith('application/json'):
-                        json.dump(resp.json(), f, indent=4)
-                    else:
-                        f.write(resp.text)
-
-                logger.info(f"Response saved to: {file_path}")
-
-            except Exception as e:
-                logger.error(f"Error saving response to file: {str(e)}")
-                raise
-
-        def close_session(self) -> None:
-            """Close session and cleanup"""
-            self.session.close()
-            logger.info("Session closed")
-
-        # ==================== Advanced Operations ====================
-
-        def retry_request(self, method: str, endpoint: str, max_retries: int = 3,
-                          retry_delay: float = 1.0, **kwargs) -> requests.Response:
-            """
-            Retry request on failure
-
-            Args:
-                method: HTTP method
-                endpoint: API endpoint
-                max_retries: Maximum number of retries
-                retry_delay: Delay between retries in seconds
-                **kwargs: Request parameters
-
-            Returns:
-                Response object
-            """
-            method = method.upper()
-            request_methods = {
-                'GET': self.get,
-                'POST': self.post,
-                'PUT': self.put,
-                'PATCH': self.patch,
-                'DELETE': self.delete
-            }
-
-            if method not in request_methods:
-                raise ValueError(f"Unsupported HTTP method: {method}")
-
-            for attempt in range(max_retries):
-                try:
-                    logger.info(f"Attempt {attempt + 1} of {max_retries}")
-                    response = request_methods[method](endpoint, **kwargs)
-
-                    if response.status_code < 500:  # Success or client error
-                        return response
-
-                    logger.warning(f"Server error {response.status_code}, retrying...")
-
-                except RequestException as e:
-                    logger.warning(f"Request failed: {str(e)}, retrying...")
-
-                if attempt < max_retries - 1:
-                    time.sleep(retry_delay)
-
-            raise Exception(f"Request failed after {max_retries} attempts")
-
-        def batch_requests(self, requests_list: List[Dict]) -> List[requests.Response]:
-            """
-            Execute multiple requests in batch
-
-            Args:
-                requests_list: List of request dictionaries containing 'method', 'endpoint', and optional params
-
-            Returns:
-                List of Response objects
-            """
-            responses = []
-
-            for req in requests_list:
-                method = req.get('method', 'GET').upper()
-                endpoint = req.get('endpoint')
-                params = req.get('params', {})
-
-                logger.info(f"Batch request: {method} {endpoint}")
-
-                if method == 'GET':
-                    response = self.get(endpoint, **params)
-                elif method == 'POST':
-                    response = self.post(endpoint, **params)
-                elif method == 'PUT':
-                    response = self.put(endpoint, **params)
-                elif method == 'PATCH':
-                    response = self.patch(endpoint, **params)
-                elif method == 'DELETE':
-                    response = self.delete(endpoint, **params)
+            with open(file_path, 'w', encoding='utf-8') as f:
+                if resp.headers.get('Content-Type', '').startswith('application/json'):
+                    json.dump(resp.json(), f, indent=4)
                 else:
-                    logger.warning(f"Unsupported method in batch: {method}")
-                    continue
+                    f.write(resp.text)
 
-                responses.append(response)
+            logger.info(f"Response saved to: {file_path}")
 
-            logger.info(f"Batch completed: {len(responses)} requests executed")
-            return responses
+        except Exception as e:
+            logger.error(f"Error saving response to file: {str(e)}")
+            raise
 
-        def parallel_requests(self, requests_list: List[Dict], max_workers: int = 5) -> List[requests.Response]:
-            """
-            Execute multiple requests in parallel
+    def close_session(self) -> None:
+        """Close session and cleanup"""
+        self.session.close()
+        logger.info("Session closed")
 
-            Args:
-                requests_list: List of request dictionaries
-                max_workers: Maximum number of concurrent workers
+    # ==================== Advanced Operations ====================
 
-            Returns:
-                List of Response objects
-            """
-            from concurrent.futures import ThreadPoolExecutor, as_completed
+    def retry_request(self, method: str, endpoint: str, max_retries: int = 3,
+                      retry_delay: float = 1.0, **kwargs) -> requests.Response:
+        """
+        Retry request on failure
 
-            def execute_request(req):
-                method = req.get('method', 'GET').upper()
-                endpoint = req.get('endpoint')
-                params = req.get('params', {})
+        Args:
+            method: HTTP method
+            endpoint: API endpoint
+            max_retries: Maximum number of retries
+            retry_delay: Delay between retries in seconds
+            **kwargs: Request parameters
 
-                if method == 'GET':
-                    return self.get(endpoint, **params)
-                elif method == 'POST':
-                    return self.post(endpoint, **params)
-                elif method == 'PUT':
-                    return self.put(endpoint, **params)
-                elif method == 'PATCH':
-                    return self.patch(endpoint, **params)
-                elif method == 'DELETE':
-                    return self.delete(endpoint, **params)
+        Returns:
+            Response object
+        """
+        method = method.upper()
+        request_methods = {
+            'GET': self.get,
+            'POST': self.post,
+            'PUT': self.put,
+            'PATCH': self.patch,
+            'DELETE': self.delete
+        }
 
-            responses = []
-            with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                futures = {executor.submit(execute_request, req): req for req in requests_list}
+        if method not in request_methods:
+            raise ValueError(f"Unsupported HTTP method: {method}")
 
-                for future in as_completed(futures):
-                    try:
-                        response = future.result()
-                        responses.append(response)
-                    except Exception as e:
-                        logger.error(f"Parallel request failed: {str(e)}")
-
-            logger.info(f"Parallel execution completed: {len(responses)} requests")
-            return responses
-
-        def wait_for_status(self, endpoint: str, expected_status: int,
-                            timeout: int = 60, interval: int = 2) -> requests.Response:
-            """
-            Poll endpoint until expected status is received
-
-            Args:
-                endpoint: API endpoint
-                expected_status: Expected status code
-                timeout: Maximum wait time in seconds
-                interval: Polling interval in seconds
-
-            Returns:
-                Response object with expected status
-            """
-            start_time = time.time()
-
-            while time.time() - start_time < timeout:
-                try:
-                    response = self.get(endpoint)
-
-                    if response.status_code == expected_status:
-                        logger.info(f"Expected status {expected_status} received")
-                        return response
-
-                    logger.info(f"Status {response.status_code}, waiting for {expected_status}...")
-                    time.sleep(interval)
-
-                except Exception as e:
-                    logger.warning(f"Request failed: {str(e)}, retrying...")
-                    time.sleep(interval)
-
-            raise TimeoutError(f"Expected status {expected_status} not received within {timeout} seconds")
-
-        def wait_for_condition(self, endpoint: str, condition_func,
-                               timeout: int = 60, interval: int = 2, **kwargs) -> requests.Response:
-            """
-            Poll endpoint until condition function returns True
-
-            Args:
-                endpoint: API endpoint
-                condition_func: Function that takes response and returns bool
-                timeout: Maximum wait time in seconds
-                interval: Polling interval in seconds
-                **kwargs: Additional request parameters
-
-            Returns:
-                Response object when condition is met
-            """
-            start_time = time.time()
-
-            while time.time() - start_time < timeout:
-                try:
-                    response = self.get(endpoint, **kwargs)
-
-                    if condition_func(response):
-                        logger.info("Condition met")
-                        return response
-
-                    logger.info("Condition not met, waiting...")
-                    time.sleep(interval)
-
-                except Exception as e:
-                    logger.warning(f"Request failed: {str(e)}, retrying...")
-                    time.sleep(interval)
-
-            raise TimeoutError(f"Condition not met within {timeout} seconds")
-
-        # ==================== GraphQL Support ====================
-
-        def graphql_query(self, endpoint: str, query: str, variables: Dict = None,
-                          operation_name: str = None, headers: Dict = None) -> requests.Response:
-            """
-            Execute GraphQL query
-
-            Args:
-                endpoint: GraphQL endpoint
-                query: GraphQL query string
-                variables: Query variables
-                operation_name: Operation name
-                headers: Request headers
-
-            Returns:
-                Response object
-            """
-            payload = {'query': query}
-
-            if variables:
-                payload['variables'] = variables
-
-            if operation_name:
-                payload['operationName'] = operation_name
-
-            logger.info(f"Executing GraphQL query: {operation_name or 'unnamed'}")
-
-            return self.post(endpoint, json_data=payload, headers=headers)
-
-        def graphql_mutation(self, endpoint: str, mutation: str, variables: Dict = None,
-                             operation_name: str = None, headers: Dict = None) -> requests.Response:
-            """
-            Execute GraphQL mutation
-
-            Args:
-                endpoint: GraphQL endpoint
-                mutation: GraphQL mutation string
-                variables: Mutation variables
-                operation_name: Operation name
-                headers: Request headers
-
-            Returns:
-                Response object
-            """
-            payload = {'query': mutation}
-
-            if variables:
-                payload['variables'] = variables
-
-            if operation_name:
-                payload['operationName'] = operation_name
-
-            logger.info(f"Executing GraphQL mutation: {operation_name or 'unnamed'}")
-
-            return self.post(endpoint, json_data=payload, headers=headers)
-
-        # ==================== SOAP Support ====================
-
-        def soap_request(self, endpoint: str, soap_action: str, soap_body: str,
-                         headers: Dict = None) -> requests.Response:
-            """
-            Send SOAP request
-
-            Args:
-                endpoint: SOAP endpoint
-                soap_action: SOAP action header
-                soap_body: SOAP envelope XML
-                headers: Additional headers
-
-            Returns:
-                Response object
-            """
-            soap_headers = {
-                'Content-Type': 'text/xml; charset=utf-8',
-                'SOAPAction': soap_action
-            }
-
-            if headers:
-                soap_headers.update(headers)
-
-            logger.info(f"Sending SOAP request with action: {soap_action}")
-
-            return self.post(endpoint, data=soap_body, headers=soap_headers)
-
-        # ==================== Performance Testing ====================
-
-        def measure_response_time(self, method: str, endpoint: str,
-                                  iterations: int = 10, **kwargs) -> Dict[str, float]:
-            """
-            Measure response time statistics
-
-            Args:
-                method: HTTP method
-                endpoint: API endpoint
-                iterations: Number of iterations
-                **kwargs: Request parameters
-
-            Returns:
-                Dictionary with min, max, avg response times
-            """
-            method = method.upper()
-            request_methods = {
-                'GET': self.get,
-                'POST': self.post,
-                'PUT': self.put,
-                'PATCH': self.patch,
-                'DELETE': self.delete
-            }
-
-            if method not in request_methods:
-                raise ValueError(f"Unsupported HTTP method: {method}")
-
-            response_times = []
-
-            logger.info(f"Measuring response time over {iterations} iterations")
-
-            for i in range(iterations):
-                start_time = time.time()
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"Attempt {attempt + 1} of {max_retries}")
                 response = request_methods[method](endpoint, **kwargs)
-                end_time = time.time()
 
-                response_times.append(end_time - start_time)
-                logger.info(f"Iteration {i + 1}: {response_times[-1]:.3f}s")
+                if response.status_code < 500:  # Success or client error
+                    return response
 
-            stats = {
-                'min': min(response_times),
-                'max': max(response_times),
-                'avg': sum(response_times) / len(response_times),
-                'total': sum(response_times),
-                'iterations': iterations
-            }
+                logger.warning(f"Server error {response.status_code}, retrying...")
 
-            logger.info(f"Performance stats - Min: {stats['min']:.3f}s, "
-                        f"Max: {stats['max']:.3f}s, Avg: {stats['avg']:.3f}s")
+            except RequestException as e:
+                logger.warning(f"Request failed: {str(e)}, retrying...")
 
-            return stats
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
 
-        def load_test(self, method: str, endpoint: str, duration: int = 60,
-                      requests_per_second: int = 10, **kwargs) -> Dict[str, Any]:
-            """
-            Perform simple load test
+        raise Exception(f"Request failed after {max_retries} attempts")
 
-            Args:
-                method: HTTP method
-                endpoint: API endpoint
-                duration: Test duration in seconds
-                requests_per_second: Target requests per second
-                **kwargs: Request parameters
+    def batch_requests(self, requests_list: List[Dict]) -> List[requests.Response]:
+        """
+        Execute multiple requests in batch
 
-            Returns:
-                Dictionary with test results
-            """
-            method = method.upper()
-            request_methods = {
-                'GET': self.get,
-                'POST': self.post,
-                'PUT': self.put,
-                'PATCH': self.patch,
-                'DELETE': self.delete
-            }
+        Args:
+            requests_list: List of request dictionaries containing 'method', 'endpoint', and optional params
 
-            if method not in request_methods:
-                raise ValueError(f"Unsupported HTTP method: {method}")
+        Returns:
+            List of Response objects
+        """
+        responses = []
 
-            start_time = time.time()
-            interval = 1.0 / requests_per_second
+        for req in requests_list:
+            method = req.get('method', 'GET').upper()
+            endpoint = req.get('endpoint')
+            params = req.get('params', {})
 
-            total_requests = 0
-            successful_requests = 0
-            failed_requests = 0
-            response_times = []
+            logger.info(f"Batch request: {method} {endpoint}")
 
-            logger.info(f"Starting load test: {requests_per_second} req/s for {duration}s")
+            if method == 'GET':
+                response = self.get(endpoint, **params)
+            elif method == 'POST':
+                response = self.post(endpoint, **params)
+            elif method == 'PUT':
+                response = self.put(endpoint, **params)
+            elif method == 'PATCH':
+                response = self.patch(endpoint, **params)
+            elif method == 'DELETE':
+                response = self.delete(endpoint, **params)
+            else:
+                logger.warning(f"Unsupported method in batch: {method}")
+                continue
 
-            while time.time() - start_time < duration:
-                request_start = time.time()
+            responses.append(response)
 
+        logger.info(f"Batch completed: {len(responses)} requests executed")
+        return responses
+
+    def parallel_requests(self, requests_list: List[Dict], max_workers: int = 5) -> List[requests.Response]:
+        """
+        Execute multiple requests in parallel
+
+        Args:
+            requests_list: List of request dictionaries
+            max_workers: Maximum number of concurrent workers
+
+        Returns:
+            List of Response objects
+        """
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        def execute_request(req):
+            method = req.get('method', 'GET').upper()
+            endpoint = req.get('endpoint')
+            params = req.get('params', {})
+
+            if method == 'GET':
+                return self.get(endpoint, **params)
+            elif method == 'POST':
+                return self.post(endpoint, **params)
+            elif method == 'PUT':
+                return self.put(endpoint, **params)
+            elif method == 'PATCH':
+                return self.patch(endpoint, **params)
+            elif method == 'DELETE':
+                return self.delete(endpoint, **params)
+
+        responses = []
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(execute_request, req): req for req in requests_list}
+
+            for future in as_completed(futures):
                 try:
-                    response = request_methods[method](endpoint, **kwargs)
-                    response_times.append(self.get_response_time(response))
-
-                    if 200 <= response.status_code < 300:
-                        successful_requests += 1
-                    else:
-                        failed_requests += 1
-
+                    response = future.result()
+                    responses.append(response)
                 except Exception as e:
+                    logger.error(f"Parallel request failed: {str(e)}")
+
+        logger.info(f"Parallel execution completed: {len(responses)} requests")
+        return responses
+
+    def wait_for_status(self, endpoint: str, expected_status: int,
+                        timeout: int = 60, interval: int = 2) -> requests.Response:
+        """
+        Poll endpoint until expected status is received
+
+        Args:
+            endpoint: API endpoint
+            expected_status: Expected status code
+            timeout: Maximum wait time in seconds
+            interval: Polling interval in seconds
+
+        Returns:
+            Response object with expected status
+        """
+        start_time = time.time()
+
+        while time.time() - start_time < timeout:
+            try:
+                response = self.get(endpoint)
+
+                if response.status_code == expected_status:
+                    logger.info(f"Expected status {expected_status} received")
+                    return response
+
+                logger.info(f"Status {response.status_code}, waiting for {expected_status}...")
+                time.sleep(interval)
+
+            except Exception as e:
+                logger.warning(f"Request failed: {str(e)}, retrying...")
+                time.sleep(interval)
+
+        raise TimeoutError(f"Expected status {expected_status} not received within {timeout} seconds")
+
+    def wait_for_condition(self, endpoint: str, condition_func,
+                           timeout: int = 60, interval: int = 2, **kwargs) -> requests.Response:
+        """
+        Poll endpoint until condition function returns True
+
+        Args:
+            endpoint: API endpoint
+            condition_func: Function that takes response and returns bool
+            timeout: Maximum wait time in seconds
+            interval: Polling interval in seconds
+            **kwargs: Additional request parameters
+
+        Returns:
+            Response object when condition is met
+        """
+        start_time = time.time()
+
+        while time.time() - start_time < timeout:
+            try:
+                response = self.get(endpoint, **kwargs)
+
+                if condition_func(response):
+                    logger.info("Condition met")
+                    return response
+
+                logger.info("Condition not met, waiting...")
+                time.sleep(interval)
+
+            except Exception as e:
+                logger.warning(f"Request failed: {str(e)}, retrying...")
+                time.sleep(interval)
+
+        raise TimeoutError(f"Condition not met within {timeout} seconds")
+
+    # ==================== GraphQL Support ====================
+
+    def graphql_query(self, endpoint: str, query: str, variables: Dict = None,
+                      operation_name: str = None, headers: Dict = None) -> requests.Response:
+        """
+        Execute GraphQL query
+
+        Args:
+            endpoint: GraphQL endpoint
+            query: GraphQL query string
+            variables: Query variables
+            operation_name: Operation name
+            headers: Request headers
+
+        Returns:
+            Response object
+        """
+        payload = {'query': query}
+
+        if variables:
+            payload['variables'] = variables
+
+        if operation_name:
+            payload['operationName'] = operation_name
+
+        logger.info(f"Executing GraphQL query: {operation_name or 'unnamed'}")
+
+        return self.post(endpoint, json_data=payload, headers=headers)
+
+    def graphql_mutation(self, endpoint: str, mutation: str, variables: Dict = None,
+                         operation_name: str = None, headers: Dict = None) -> requests.Response:
+        """
+        Execute GraphQL mutation
+
+        Args:
+            endpoint: GraphQL endpoint
+            mutation: GraphQL mutation string
+            variables: Mutation variables
+            operation_name: Operation name
+            headers: Request headers
+
+        Returns:
+            Response object
+        """
+        payload = {'query': mutation}
+
+        if variables:
+            payload['variables'] = variables
+
+        if operation_name:
+            payload['operationName'] = operation_name
+
+        logger.info(f"Executing GraphQL mutation: {operation_name or 'unnamed'}")
+
+        return self.post(endpoint, json_data=payload, headers=headers)
+
+    # ==================== SOAP Support ====================
+
+    def soap_request(self, endpoint: str, soap_action: str, soap_body: str,
+                     headers: Dict = None) -> requests.Response:
+        """
+        Send SOAP request
+
+        Args:
+            endpoint: SOAP endpoint
+            soap_action: SOAP action header
+            soap_body: SOAP envelope XML
+            headers: Additional headers
+
+        Returns:
+            Response object
+        """
+        soap_headers = {
+            'Content-Type': 'text/xml; charset=utf-8',
+            'SOAPAction': soap_action
+        }
+
+        if headers:
+            soap_headers.update(headers)
+
+        logger.info(f"Sending SOAP request with action: {soap_action}")
+
+        return self.post(endpoint, data=soap_body, headers=soap_headers)
+
+    # ==================== Performance Testing ====================
+
+    def measure_response_time(self, method: str, endpoint: str,
+                              iterations: int = 10, **kwargs) -> Dict[str, float]:
+        """
+        Measure response time statistics
+
+        Args:
+            method: HTTP method
+            endpoint: API endpoint
+            iterations: Number of iterations
+            **kwargs: Request parameters
+
+        Returns:
+            Dictionary with min, max, avg response times
+        """
+        method = method.upper()
+        request_methods = {
+            'GET': self.get,
+            'POST': self.post,
+            'PUT': self.put,
+            'PATCH': self.patch,
+            'DELETE': self.delete
+        }
+
+        if method not in request_methods:
+            raise ValueError(f"Unsupported HTTP method: {method}")
+
+        response_times = []
+
+        logger.info(f"Measuring response time over {iterations} iterations")
+
+        for i in range(iterations):
+            start_time = time.time()
+            response = request_methods[method](endpoint, **kwargs)
+            end_time = time.time()
+
+            response_times.append(end_time - start_time)
+            logger.info(f"Iteration {i + 1}: {response_times[-1]:.3f}s")
+
+        stats = {
+            'min': min(response_times),
+            'max': max(response_times),
+            'avg': sum(response_times) / len(response_times),
+            'total': sum(response_times),
+            'iterations': iterations
+        }
+
+        logger.info(f"Performance stats - Min: {stats['min']:.3f}s, "
+                    f"Max: {stats['max']:.3f}s, Avg: {stats['avg']:.3f}s")
+
+        return stats
+
+    def load_test(self, method: str, endpoint: str, duration: int = 60,
+                  requests_per_second: int = 10, **kwargs) -> Dict[str, Any]:
+        """
+        Perform simple load test
+
+        Args:
+            method: HTTP method
+            endpoint: API endpoint
+            duration: Test duration in seconds
+            requests_per_second: Target requests per second
+            **kwargs: Request parameters
+
+        Returns:
+            Dictionary with test results
+        """
+        method = method.upper()
+        request_methods = {
+            'GET': self.get,
+            'POST': self.post,
+            'PUT': self.put,
+            'PATCH': self.patch,
+            'DELETE': self.delete
+        }
+
+        if method not in request_methods:
+            raise ValueError(f"Unsupported HTTP method: {method}")
+
+        start_time = time.time()
+        interval = 1.0 / requests_per_second
+
+        total_requests = 0
+        successful_requests = 0
+        failed_requests = 0
+        response_times = []
+
+        logger.info(f"Starting load test: {requests_per_second} req/s for {duration}s")
+
+        while time.time() - start_time < duration:
+            request_start = time.time()
+
+            try:
+                response = request_methods[method](endpoint, **kwargs)
+                response_times.append(self.get_response_time(response))
+
+                if 200 <= response.status_code < 300:
+                    successful_requests += 1
+                else:
                     failed_requests += 1
-                    logger.warning(f"Request failed: {str(e)}")
-
-                total_requests += 1
-
-                # Sleep to maintain target rate
-                elapsed = time.time() - request_start
-                if elapsed < interval:
-                    time.sleep(interval - elapsed)
-
-            actual_duration = time.time() - start_time
-
-            results = {
-                'duration': actual_duration,
-                'total_requests': total_requests,
-                'successful_requests': successful_requests,
-                'failed_requests': failed_requests,
-                'requests_per_second': total_requests / actual_duration,
-                'success_rate': (successful_requests / total_requests * 100) if total_requests > 0 else 0,
-                'avg_response_time': sum(response_times) / len(response_times) if response_times else 0,
-                'min_response_time': min(response_times) if response_times else 0,
-                'max_response_time': max(response_times) if response_times else 0
-            }
-
-            logger.info(f"Load test completed - Total: {total_requests}, "
-                        f"Success: {successful_requests}, Failed: {failed_requests}")
-
-            return results
-
-        # ==================== Data Extraction ====================
-
-        def extract_value_by_regex(self, pattern: str, response: requests.Response = None) -> Optional[str]:
-            """
-            Extract value from response using regex
-
-            Args:
-                pattern: Regex pattern
-                response: Response object (uses last response if None)
-
-            Returns:
-                Matched value or None
-            """
-            import re
-
-            try:
-                resp = response if response else self.response
-                text = resp.text
-
-                match = re.search(pattern, text)
-                if match:
-                    value = match.group(1) if match.groups() else match.group(0)
-                    logger.info(f"Extracted value by regex: {value}")
-                    return value
-
-                logger.warning(f"No match found for pattern: {pattern}")
-                return None
 
             except Exception as e:
-                logger.error(f"Error extracting value by regex: {str(e)}")
-                return None
+                failed_requests += 1
+                logger.warning(f"Request failed: {str(e)}")
 
-        def extract_all_by_regex(self, pattern: str, response: requests.Response = None) -> List[str]:
-            """
-            Extract all matching values from response using regex
+            total_requests += 1
 
-            Args:
-                pattern: Regex pattern
-                response: Response object (uses last response if None)
+            # Sleep to maintain target rate
+            elapsed = time.time() - request_start
+            if elapsed < interval:
+                time.sleep(interval - elapsed)
 
-            Returns:
-                List of matched values
-            """
-            import re
+        actual_duration = time.time() - start_time
 
-            try:
-                resp = response if response else self.response
-                text = resp.text
+        results = {
+            'duration': actual_duration,
+            'total_requests': total_requests,
+            'successful_requests': successful_requests,
+            'failed_requests': failed_requests,
+            'requests_per_second': total_requests / actual_duration,
+            'success_rate': (successful_requests / total_requests * 100) if total_requests > 0 else 0,
+            'avg_response_time': sum(response_times) / len(response_times) if response_times else 0,
+            'min_response_time': min(response_times) if response_times else 0,
+            'max_response_time': max(response_times) if response_times else 0
+        }
 
-                matches = re.findall(pattern, text)
-                logger.info(f"Extracted {len(matches)} values by regex")
-                return matches
+        logger.info(f"Load test completed - Total: {total_requests}, "
+                    f"Success: {successful_requests}, Failed: {failed_requests}")
 
-            except Exception as e:
-                logger.error(f"Error extracting values by regex: {str(e)}")
-                return []
+        return results
 
-        # ==================== Comparison Methods ====================
+    # ==================== Data Extraction ====================
 
-        def compare_responses(self, response1: requests.Response,
-                              response2: requests.Response) -> Dict[str, Any]:
-            """
-            Compare two responses
+    def extract_value_by_regex(self, pattern: str, response: requests.Response = None) -> Optional[str]:
+        """
+        Extract value from response using regex
 
-            Args:
-                response1: First response
-                response2: Second response
+        Args:
+            pattern: Regex pattern
+            response: Response object (uses last response if None)
 
-            Returns:
-                Dictionary with comparison results
-            """
-            comparison = {
-                'status_codes_match': response1.status_code == response2.status_code,
-                'status_code_1': response1.status_code,
-                'status_code_2': response2.status_code,
-                'response_times': {
-                    'response_1': response1.elapsed.total_seconds(),
-                    'response_2': response2.elapsed.total_seconds()
-                }
+        Returns:
+            Matched value or None
+        """
+        import re
+
+        try:
+            resp = response if response else self.response
+            text = resp.text
+
+            match = re.search(pattern, text)
+            if match:
+                value = match.group(1) if match.groups() else match.group(0)
+                logger.info(f"Extracted value by regex: {value}")
+                return value
+
+            logger.warning(f"No match found for pattern: {pattern}")
+            return None
+
+        except Exception as e:
+            logger.error(f"Error extracting value by regex: {str(e)}")
+            return None
+
+    def extract_all_by_regex(self, pattern: str, response: requests.Response = None) -> List[str]:
+        """
+        Extract all matching values from response using regex
+
+        Args:
+            pattern: Regex pattern
+            response: Response object (uses last response if None)
+
+        Returns:
+            List of matched values
+        """
+        import re
+
+        try:
+            resp = response if response else self.response
+            text = resp.text
+
+            matches = re.findall(pattern, text)
+            logger.info(f"Extracted {len(matches)} values by regex")
+            return matches
+
+        except Exception as e:
+            logger.error(f"Error extracting values by regex: {str(e)}")
+            return []
+
+    # ==================== Comparison Methods ====================
+
+    def compare_responses(self, response1: requests.Response,
+                          response2: requests.Response) -> Dict[str, Any]:
+        """
+        Compare two responses
+
+        Args:
+            response1: First response
+            response2: Second response
+
+        Returns:
+            Dictionary with comparison results
+        """
+        comparison = {
+            'status_codes_match': response1.status_code == response2.status_code,
+            'status_code_1': response1.status_code,
+            'status_code_2': response2.status_code,
+            'response_times': {
+                'response_1': response1.elapsed.total_seconds(),
+                'response_2': response2.elapsed.total_seconds()
             }
+        }
 
-            try:
-                json1 = response1.json()
-                json2 = response2.json()
-                comparison['json_match'] = json1 == json2
-                comparison['json_1'] = json1
-                comparison['json_2'] = json2
-            except:
-                comparison['json_match'] = response1.text == response2.text
-                comparison['text_match'] = response1.text == response2.text
+        try:
+            json1 = response1.json()
+            json2 = response2.json()
+            comparison['json_match'] = json1 == json2
+            comparison['json_1'] = json1
+            comparison['json_2'] = json2
+        except:
+            comparison['json_match'] = response1.text == response2.text
+            comparison['text_match'] = response1.text == response2.text
 
-            logger.info("Response comparison completed")
-            return comparison
+        logger.info("Response comparison completed")
+        return comparison
+
+    # ==================== Alias Methods for Base API Compatibility ====================
+
+    def validate_response_status(self, response: requests.Response, expected_status: int):
+        """
+        Validate response status code (alias for assert_status_code)
+
+        Args:
+            response: Response object to validate
+            expected_status: Expected HTTP status code
+
+        Raises:
+            AssertionError if status code doesn't match
+        """
+        return self.assert_status_code(expected_status, response)
+
+    def validate_response_time(self, response: requests.Response, max_time: float):
+        """
+        Validate response time (alias for assert_response_time)
+
+        Args:
+            response: Response object to validate
+            max_time: Maximum acceptable response time in seconds
+
+        Raises:
+            AssertionError if response time exceeds max_time
+        """
+        return self.assert_response_time(max_time, response)
+
+    def validate_json_schema(self, response_data: Dict, schema: Dict):
+        """
+        Validate JSON response against schema (alias for assert_json_schema)
+
+        Args:
+            response_data: Response JSON data as dictionary
+            schema: JSON schema dictionary
+
+        Raises:
+            ValidationError if schema validation fails
+        """
+        try:
+            validate(instance=response_data, schema=schema)
+            logger.info("JSON schema validation passed")
+            return True
+        except ValidationError as e:
+            logger.error(f"JSON schema validation failed: {str(e)}")
+            raise
+
+    def extract_json_response(self, response: requests.Response) -> Dict[str, Any]:
+        """
+        Extract JSON from response (alias for get_response_json)
+
+        Args:
+            response: Response object
+
+        Returns:
+            JSON data as dictionary
+        """
+        return self.get_response_json(response)
 

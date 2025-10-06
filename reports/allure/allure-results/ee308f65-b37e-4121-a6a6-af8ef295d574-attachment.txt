@@ -1,0 +1,4 @@
+Environment: dev
+Browser: chrome
+Base URL: https://dev.saucedemo.com
+API Base URL: https://reqres.in/api

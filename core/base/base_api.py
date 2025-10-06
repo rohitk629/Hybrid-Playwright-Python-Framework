@@ -258,9 +258,9 @@ class BaseAPIService:
         with allure.step(f"Validate status code is {expected_status}"):
             try:
                 self.api_client.validate_response_status(response, expected_status)
-                self.logger.info(f"✓ Status code validation passed: {response.status_code}")
+                self.logger.info(f"[PASS] Status code validation passed: {response.status_code}")
             except AssertionError as e:
-                self.logger.error(f"✗ Status code validation failed: {e}")
+                self.logger.error(f"[FAIL] Status code validation failed: {e}")
                 raise
 
     def validate_response_time(self, response: requests.Response, max_time: float = 5.0):
@@ -281,9 +281,9 @@ class BaseAPIService:
             try:
                 self.api_client.validate_response_time(response, max_time)
                 response_time = response.elapsed.total_seconds()
-                self.logger.info(f"✓ Response time validation passed: {response_time:.3f}s")
+                self.logger.info(f"[PASS] Response time validation passed: {response_time:.3f}s")
             except AssertionError as e:
-                self.logger.error(f"✗ Response time validation failed: {e}")
+                self.logger.error(f"[FAIL] Response time validation failed: {e}")
                 raise
 
     def validate_response_contains_key(self, response_data: Dict, key: str):
@@ -303,9 +303,9 @@ class BaseAPIService:
         with allure.step(f"Validate response contains key: {key}"):
             try:
                 assert key in response_data, f"Key '{key}' not found in response"
-                self.logger.info(f"✓ Response contains key: {key}")
+                self.logger.info(f"[PASS] Response contains key: {key}")
             except AssertionError as e:
-                self.logger.error(f"✗ Key validation failed: {e}")
+                self.logger.error(f"[FAIL] Key validation failed: {e}")
                 raise
 
     def validate_response_value(self, response_data: Dict, key: str, expected_value: Any):
@@ -328,9 +328,9 @@ class BaseAPIService:
                 actual_value = response_data.get(key)
                 assert actual_value == expected_value, \
                     f"Expected {key}='{expected_value}', got '{actual_value}'"
-                self.logger.info(f"✓ Value validation passed: {key}={expected_value}")
+                self.logger.info(f"[PASS] Value validation passed: {key}={expected_value}")
             except AssertionError as e:
-                self.logger.error(f"✗ Value validation failed: {e}")
+                self.logger.error(f"[FAIL] Value validation failed: {e}")
                 raise
 
     def validate_json_schema(self, response_data: Dict, schema_file: str):
@@ -351,9 +351,9 @@ class BaseAPIService:
             try:
                 schema = self.json_utility.read_json_file(schema_file)
                 self.api_client.validate_json_schema(response_data, schema)
-                self.logger.info("✓ JSON schema validation passed")
+                self.logger.info("[PASS] JSON schema validation passed")
             except Exception as e:
-                self.logger.error(f"✗ JSON schema validation failed: {e}")
+                self.logger.error(f"[FAIL] JSON schema validation failed: {e}")
                 raise
 
     def validate_response_not_empty(self, response_data: Any):
@@ -372,9 +372,9 @@ class BaseAPIService:
         with allure.step("Validate response is not empty"):
             try:
                 assert response_data, "Response is empty"
-                self.logger.info("✓ Response is not empty")
+                self.logger.info("[PASS] Response is not empty")
             except AssertionError as e:
-                self.logger.error(f"✗ Empty response validation failed: {e}")
+                self.logger.error(f"[FAIL] Empty response validation failed: {e}")
                 raise
 
     def validate_response_list_length(self, response_data: List, expected_length: int):
@@ -396,9 +396,9 @@ class BaseAPIService:
                 actual_length = len(response_data)
                 assert actual_length == expected_length, \
                     f"Expected list length {expected_length}, got {actual_length}"
-                self.logger.info(f"✓ List length validation passed: {actual_length}")
+                self.logger.info(f"[PASS] List length validation passed: {actual_length}")
             except AssertionError as e:
-                self.logger.error(f"✗ List length validation failed: {e}")
+                self.logger.error(f"[FAIL] List length validation failed: {e}")
                 raise
 
     # ========================================================================
@@ -424,10 +424,10 @@ class BaseAPIService:
         with allure.step("Extract JSON response"):
             try:
                 json_data = self.api_client.extract_json_response(response)
-                self.logger.info("✓ Successfully extracted JSON response")
+                self.logger.info("[PASS] Successfully extracted JSON response")
                 return json_data
             except Exception as e:
-                self.logger.error(f"✗ JSON extraction failed: {e}")
+                self.logger.error(f"[FAIL] JSON extraction failed: {e}")
                 raise
 
     def extract_value_from_response(self, response_data: Dict, key_path: str) -> Any:
@@ -875,7 +875,7 @@ class BaseAPIService:
                 response = self.get_request(endpoint)
 
                 if response.status_code == expected_status:
-                    self.logger.info(f"✓ Got expected status {expected_status} on attempt {attempt}")
+                    self.logger.info(f"[PASS] Got expected status {expected_status} on attempt {attempt}")
                     return response
 
                 self.logger.warning(f"Got status {response.status_code}, expected {expected_status}")
@@ -1153,9 +1153,9 @@ class BaseAPIService:
         try:
             assert response.status_code == expected_status, \
                 f"Expected status {expected_status}, got {response.status_code}. Response: {response.text[:200]}"
-            self.logger.info(f"✓ Status code assertion passed: {response.status_code}")
+            self.logger.info(f"[PASS] Status code assertion passed: {response.status_code}")
         except AssertionError as e:
-            self.logger.error(f"✗ Status code assertion failed: {e}")
+            self.logger.error(f"[FAIL] Status code assertion failed: {e}")
             self._attach_response_to_allure(response)
             raise
 
@@ -1172,9 +1172,9 @@ class BaseAPIService:
         """
         try:
             assert key in response_data, f"Key '{key}' not found in response. Available keys: {list(response_data.keys())}"
-            self.logger.info(f"✓ Response contains key: {key}")
+            self.logger.info(f"[PASS] Response contains key: {key}")
         except AssertionError as e:
-            self.logger.error(f"✗ Key assertion failed: {e}")
+            self.logger.error(f"[FAIL] Key assertion failed: {e}")
             raise
 
     def assert_response_value(self, response_data: Dict, key: str, expected_value: Any):
@@ -1193,9 +1193,9 @@ class BaseAPIService:
             actual_value = response_data.get(key)
             assert actual_value == expected_value, \
                 f"Expected {key}='{expected_value}', got '{actual_value}'"
-            self.logger.info(f"✓ Value assertion passed: {key}={expected_value}")
+            self.logger.info(f"[PASS] Value assertion passed: {key}={expected_value}")
         except AssertionError as e:
-            self.logger.error(f"✗ Value assertion failed: {e}")
+            self.logger.error(f"[FAIL] Value assertion failed: {e}")
             raise
 
     def assert_response_not_empty(self, response_data: Any):
@@ -1210,9 +1210,9 @@ class BaseAPIService:
         """
         try:
             assert response_data, "Response is empty"
-            self.logger.info("✓ Response is not empty")
+            self.logger.info("[PASS] Response is not empty")
         except AssertionError as e:
-            self.logger.error(f"✗ Empty response assertion failed: {e}")
+            self.logger.error(f"[FAIL] Empty response assertion failed: {e}")
             raise
 
     def assert_response_contains_text(self, response: requests.Response, text: str):
@@ -1228,9 +1228,9 @@ class BaseAPIService:
         """
         try:
             assert text in response.text, f"Text '{text}' not found in response"
-            self.logger.info(f"✓ Response contains text: '{text}'")
+            self.logger.info(f"[PASS] Response contains text: '{text}'")
         except AssertionError as e:
-            self.logger.error(f"✗ Text assertion failed: {e}")
+            self.logger.error(f"[FAIL] Text assertion failed: {e}")
             raise
 
     def assert_response_time_less_than(self, response: requests.Response, max_seconds: float):
@@ -1248,9 +1248,9 @@ class BaseAPIService:
             actual_time = response.elapsed.total_seconds()
             assert actual_time < max_seconds, \
                 f"Response time {actual_time:.3f}s exceeds maximum {max_seconds}s"
-            self.logger.info(f"✓ Response time assertion passed: {actual_time:.3f}s < {max_seconds}s")
+            self.logger.info(f"[PASS] Response time assertion passed: {actual_time:.3f}s < {max_seconds}s")
         except AssertionError as e:
-            self.logger.error(f"✗ Response time assertion failed: {e}")
+            self.logger.error(f"[FAIL] Response time assertion failed: {e}")
             raise
 
     # ========================================================================
@@ -1296,7 +1296,7 @@ class BaseAPIService:
 
                 # Check if response is successful
                 if 200 <= response.status_code < 300:
-                    self.logger.info(f"✓ Request succeeded on attempt {attempt}")
+                    self.logger.info(f"[PASS] Request succeeded on attempt {attempt}")
                     return response
                 else:
                     self.logger.warning(f"Request returned status {response.status_code}")
@@ -1525,11 +1525,11 @@ class BaseAPIService:
             status = status_data.get('status', '').lower()
 
             if status in ['completed', 'success', 'done']:
-                self.logger.info(f"✓ Operation completed successfully")
+                self.logger.info(f"[PASS] Operation completed successfully")
                 return status_response
             elif status in ['failed', 'error']:
                 error_msg = status_data.get('error', 'Operation failed')
-                self.logger.error(f"✗ Operation failed: {error_msg}")
+                self.logger.error(f"[FAIL] Operation failed: {error_msg}")
                 raise Exception(f"Async operation failed: {error_msg}")
 
             self.logger.info(f"Status: {status}, waiting...")

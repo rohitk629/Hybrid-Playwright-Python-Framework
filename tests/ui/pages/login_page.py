@@ -1,5 +1,5 @@
 """
-Login Page Object Model 
+Login Page Object Model
 """
 from core.base.base_page import BasePage
 import allure
@@ -18,12 +18,12 @@ class LoginPage(BasePage):
     @allure.step("Enter username: {username}")
     def enter_username(self, username: str):
         """Enter username"""
-        self.fill(self.USERNAME_INPUT, username)
+        self.enter_text(self.USERNAME_INPUT, username)
 
     @allure.step("Enter password")
     def enter_password(self, password: str):
         """Enter password"""
-        self.fill(self.PASSWORD_INPUT, password)
+        self.enter_text(self.PASSWORD_INPUT, password)
 
     @allure.step("Click login button")
     def click_login_button(self):

@@ -29,16 +29,29 @@ class BrowserUtility:
     """
 
     def __init__(self):
-        """Initialize Browser Utility"""
+        """Initialize browser utility"""
+        # Use relative path within project directory
+        project_root = Path.cwd()  # Current working directory
+        self.screenshot_dir = project_root / "screenshots"
+        self.downloads_dir = project_root / "downloads"
+
+        # Create directories if they don't exist
+        try:
+            self.screenshot_dir.mkdir(parents=True, exist_ok=True)
+            self.downloads_dir.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            print(f"Warning: Could not create directories: {e}")
+            # Fallback to temp directories
+            self.screenshot_dir = Path.cwd() / "temp_screenshots"
+            self.downloads_dir = Path.cwd() / "temp_downloads"
+            self.screenshot_dir.mkdir(parents=True, exist_ok=True)
+            self.downloads_dir.mkdir(parents=True, exist_ok=True)
+
         self.playwright = None
         self.browser = None
         self.context = None
         self.page = None
         self.default_timeout = 10000  # Playwright uses milliseconds
-        self.screenshot_dir = Path(__file__).parent.parent.parent.parent.parent.parent / "screenshots"
-        self.screenshot_dir.mkdir(parents=True, exist_ok=True)
-        self.downloads_dir = Path(__file__).parent.parent.parent.parent.parent.parent / "downloads"
-        self.downloads_dir.mkdir(parents=True, exist_ok=True)
         logger.info("BrowserUtility initialized")
 
     # ==================== Browser Initialization ====================
@@ -231,6 +244,10 @@ class BrowserUtility:
         Returns:
             Browser instance
         """
+        # Set default if None is passed
+        if browser_name is None:
+            browser_name = 'chromium'
+
         browser_name = browser_name.lower()
 
         if browser_name in ['chromium', 'chrome']:

@@ -196,13 +196,20 @@ class BaseTest:
         """
         if self.browser_utility and self.browser_utility.page:
             try:
+                # Fix: Use relative path in project directory
+                screenshot_dir = Path("screenshots")
+                screenshot_dir.mkdir(parents=True, exist_ok=True)
+
+                filename = f"{self.test_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+                screenshot_path = screenshot_dir / filename
+
                 screenshot_path = self.browser_utility.take_screenshot(
-                    filename=f"{self.test_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+                    filename=str(screenshot_path)
                 )
 
                 # Attach to Allure
                 allure.attach.file(
-                    screenshot_path,
+                    str(screenshot_path),
                     name=description,
                     attachment_type=allure.attachment_type.PNG
                 )
@@ -267,7 +274,7 @@ class BaseTest:
             assert actual == expected, \
                 f"{message}. Expected: '{expected}', Actual: '{actual}'"
 
-            self.logger.info(f"✓ Assertion passed: {actual} == {expected}")
+            self.logger.info(f"[PASS] Assertion passed: {actual} == {expected}")
 
             with allure.step(f"Assert equals: {actual} == {expected}"):
                 pass
@@ -289,7 +296,7 @@ class BaseTest:
             assert actual != expected, \
                 f"{message}. Both values are: '{actual}'"
 
-            self.logger.info(f"✓ Assertion passed: {actual} != {expected}")
+            self.logger.info(f"[PASS] Assertion passed: {actual} != {expected}")
 
             with allure.step(f"Assert not equals: {actual} != {expected}"):
                 pass
@@ -310,7 +317,7 @@ class BaseTest:
             assert condition is True, \
                 f"{message}. Condition evaluated to False"
 
-            self.logger.info(f"✓ Assertion passed: Condition is True")
+            self.logger.info(f"[PASS] Assertion passed: Condition is True")
 
             with allure.step(f"Assert True: {message}"):
                 pass
@@ -331,7 +338,7 @@ class BaseTest:
             assert condition is False, \
                 f"{message}. Condition evaluated to True"
 
-            self.logger.info(f"✓ Assertion passed: Condition is False")
+            self.logger.info(f"[PASS] Assertion passed: Condition is False")
 
             with allure.step(f"Assert False: {message}"):
                 pass
@@ -353,7 +360,7 @@ class BaseTest:
             assert item in container, \
                 f"{message}. '{item}' not found in '{container}'"
 
-            self.logger.info(f"✓ Assertion passed: '{item}' in container")
+            self.logger.info(f"[PASS] Assertion passed: '{item}' in container")
 
             with allure.step(f"Assert '{item}' in container"):
                 pass
@@ -375,7 +382,7 @@ class BaseTest:
             assert item not in container, \
                 f"{message}. '{item}' found in '{container}'"
 
-            self.logger.info(f"✓ Assertion passed: '{item}' not in container")
+            self.logger.info(f"[PASS] Assertion passed: '{item}' not in container")
 
             with allure.step(f"Assert '{item}' not in container"):
                 pass
@@ -396,7 +403,7 @@ class BaseTest:
             assert value is None, \
                 f"{message}. Value is not None: '{value}'"
 
-            self.logger.info(f"✓ Assertion passed: Value is None")
+            self.logger.info(f"[PASS] Assertion passed: Value is None")
 
             with allure.step("Assert value is None"):
                 pass
@@ -417,7 +424,7 @@ class BaseTest:
             assert value is not None, \
                 f"{message}. Value is None"
 
-            self.logger.info(f"✓ Assertion passed: Value is not None")
+            self.logger.info(f"[PASS] Assertion passed: Value is not None")
 
             with allure.step("Assert value is not None"):
                 pass
@@ -439,7 +446,7 @@ class BaseTest:
             assert actual > expected, \
                 f"{message}. {actual} is not greater than {expected}"
 
-            self.logger.info(f"✓ Assertion passed: {actual} > {expected}")
+            self.logger.info(f"[PASS] Assertion passed: {actual} > {expected}")
 
             with allure.step(f"Assert {actual} > {expected}"):
                 pass
@@ -461,7 +468,7 @@ class BaseTest:
             assert actual < expected, \
                 f"{message}. {actual} is not less than {expected}"
 
-            self.logger.info(f"✓ Assertion passed: {actual} < {expected}")
+            self.logger.info(f"[PASS] Assertion passed: {actual} < {expected}")
 
             with allure.step(f"Assert {actual} < {expected}"):
                 pass
@@ -483,7 +490,7 @@ class BaseTest:
             assert substring in text, \
                 f"{message}. '{substring}' not found in '{text}'"
 
-            self.logger.info(f"✓ Assertion passed: Text contains '{substring}'")
+            self.logger.info(f"[PASS] Assertion passed: Text contains '{substring}'")
 
             with allure.step(f"Assert text contains '{substring}'"):
                 pass
@@ -505,7 +512,7 @@ class BaseTest:
             assert actual == expected, \
                 f"{message}. Lists are not equal.\nExpected: {expected}\nActual: {actual}"
 
-            self.logger.info(f"✓ Assertion passed: Lists are equal")
+            self.logger.info(f"[PASS] Assertion passed: Lists are equal")
 
             with allure.step("Assert lists are equal"):
                 pass
@@ -526,7 +533,7 @@ class BaseTest:
         try:
             assert actual == expected, \
                 f"{message}. Expected: '{expected}', Actual: '{actual}'"
-            self.logger.info(f"✓ Soft assertion passed: {actual} == {expected}")
+            self.logger.info(f"[PASS] Soft assertion passed: {actual} == {expected}")
         except AssertionError as e:
             self.logger.warning(f"⚠ Soft assertion failed: {e}")
             # Don't raise, just log
@@ -554,7 +561,7 @@ class BaseTest:
         while time.time() - start_time < timeout:
             try:
                 if condition_func():
-                    self.logger.info(f"✓ Condition met: {message}")
+                    self.logger.info(f"[PASS] Condition met: {message}")
                     return True
             except Exception as e:
                 self.logger.debug(f"Condition check failed: {e}")

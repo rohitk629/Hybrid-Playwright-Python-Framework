@@ -14,10 +14,6 @@ behave==1.2.6
 behave-html-formatter==0.9.10
 #behave-allure-formatter==1.1.1
 
-# ==================== Web Automation ====================
-# Selenium
-selenium==4.15.2
-webdriver-manager==4.0.1
 
 # Playwright
 playwright==1.40.0

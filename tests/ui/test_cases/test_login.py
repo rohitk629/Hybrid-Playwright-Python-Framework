@@ -13,12 +13,14 @@ class TestLogin(BaseTest):
     """Login test cases"""
 
     @pytest.fixture(autouse=True)
-    def setup_login_test(self):
-        """Setup for login tests"""
+    def setup_login_test(self, setup_test):
+        """Setup for login tests - depends on setup_test"""
         self.setup_browser()
         self.login_page = LoginPage(self.browser_utility)
         login_url = "https://www.saucedemo.com"
         self.login_page.navigate_to(login_url)
+        yield
+        # Additional teardown if needed
 
     @allure.title("Test successful login")
     @allure.description("Verify user can login with valid credentials")
@@ -38,7 +40,7 @@ class TestLogin(BaseTest):
 
         self.log_test_step("Step 4: Verify successful login")
         current_url = self.login_page.get_current_url()
-        self.assert_in("inventory.html", current_url, 
+        self.assert_in("inventory.html", current_url,
                       "Should be redirected to inventory page")
 
     @allure.title("Test login with invalid credentials")
@@ -59,7 +61,7 @@ class TestLogin(BaseTest):
 
         self.log_test_step("Step 4: Verify error message")
         error_visible = self.login_page.is_element_visible(
-            self.login_page.ERROR_MESSAGE, 
+            self.login_page.ERROR_MESSAGE,
             timeout=5000
         )
         self.assert_true(error_visible, "Error message should be displayed")
