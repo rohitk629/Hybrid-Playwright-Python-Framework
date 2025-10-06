@@ -1,29 +1,29 @@
 """
-Login Page Object Model
+Login Page Object Model 
 """
 from core.base.base_page import BasePage
 import allure
 
 
 class LoginPage(BasePage):
-    """Login page object"""
+    """Login page object for SauceDemo"""
 
-    # Locators
-    USERNAME_INPUT = "input[name='username']"
-    PASSWORD_INPUT = "input[name='password']"
-    LOGIN_BUTTON = "button[type='submit']"
-    ERROR_MESSAGE = ".error-message"
-    LOGOUT_BUTTON = "button#logout"
+    # Locators for SauceDemo
+    USERNAME_INPUT = "#user-name"
+    PASSWORD_INPUT = "#password"
+    LOGIN_BUTTON = "#login-button"
+    ERROR_MESSAGE = "[data-test='error']"
+    INVENTORY_CONTAINER = "#inventory_container"
 
     @allure.step("Enter username: {username}")
     def enter_username(self, username: str):
         """Enter username"""
-        self.enter_text(self.USERNAME_INPUT, username)
+        self.fill(self.USERNAME_INPUT, username)
 
     @allure.step("Enter password")
     def enter_password(self, password: str):
         """Enter password"""
-        self.enter_text(self.PASSWORD_INPUT, password)
+        self.fill(self.PASSWORD_INPUT, password)
 
     @allure.step("Click login button")
     def click_login_button(self):
@@ -40,9 +40,11 @@ class LoginPage(BasePage):
     @allure.step("Get error message")
     def get_error_message(self) -> str:
         """Get error message text"""
-        return self.get_text(self.ERROR_MESSAGE)
+        if self.is_element_visible(self.ERROR_MESSAGE):
+            return self.get_text(self.ERROR_MESSAGE)
+        return ""
 
     @allure.step("Check if user is logged in")
     def is_logged_in(self) -> bool:
         """Check if user is logged in"""
-        return self.is_element_visible(self.LOGOUT_BUTTON)
+        return self.is_element_visible(self.INVENTORY_CONTAINER, timeout=5000)
