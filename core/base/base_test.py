@@ -20,15 +20,14 @@ class BaseTest:
     All test classes should inherit from this class
     """
 
-    def __init__(self):
-        """Initialize base test with configuration and utilities"""
-        self.config = ConfigReader()
-        self.logger = self._setup_logger()
-        self.browser_utility = None
-        self.api_client = None
-        self.test_name = None
-        self.test_start_time = None
-        self.test_data = {}
+    # Class-level attributes (no __init__ needed)
+    config = None
+    logger = None
+    browser_utility = None
+    api_client = None
+    test_name = None
+    test_start_time = None
+    test_data = {}
 
     def _setup_logger(self) -> logging.Logger:
         """
@@ -71,6 +70,13 @@ class BaseTest:
         Args:
             request: pytest request fixture
         """
+        # Initialize instance variables here (replacing __init__)
+        self.config = ConfigReader()
+        self.logger = self._setup_logger()
+        self.browser_utility = None
+        self.api_client = None
+        self.test_data = {}
+
         self.test_name = request.node.name
         self.test_start_time = datetime.now()
 

@@ -83,7 +83,7 @@ class TestUserAPI(BaseTest):
         user = self.user_service.create_user(user_data)
 
         self.log_test_step("Step 2: Validate JSON schema")
-        schema_file = "src/main/java/com/framework/models/schemas/user_schema.json"
+        schema_file = "core/models/schemas/user_schema.json"
         user_dict = user.model_dump()
         self.user_service.validate_json_schema(user_dict, schema_file).hookimpl(tryfirst=True, hookwrapper=True)
 

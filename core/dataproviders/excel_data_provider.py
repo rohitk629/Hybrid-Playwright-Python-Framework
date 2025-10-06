@@ -2,7 +2,7 @@
 Excel Data Provider
 """
 from typing import List, Dict, Any
-from core.dataproviders.test_data_provider import TestDataProvider
+from core.dataproviders.data_provider_tests import TestDataProvider
 from core.utils.excel_utility import ExcelUtility
 import pytest
 
