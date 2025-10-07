@@ -31,6 +31,7 @@ class BrowserUtility:
     def __init__(self):
         """Initialize browser utility"""
         # Use relative path within project directory
+        self.browser_utility = None
         project_root = Path.cwd()  # Current working directory
         self.screenshot_dir = project_root / "screenshots"
         self.downloads_dir = project_root / "downloads"
@@ -335,6 +336,20 @@ class BrowserUtility:
         except Exception as e:
             logger.error(f"Error navigating to {url}: {str(e)}")
             raise
+
+
+    def maximize_window(self):
+        """
+        Maximize the browser window if browser_utility is initialized
+        """
+        if self.browser_utility and hasattr(self.browser_utility, "maximize_window"):
+            try:
+                self.page.maximize_window()
+                logger.info("Browser window maximized")
+            except Exception as e:
+                logger.error(f"Failed to maximize window: {e}")
+        else:
+            logger.warning("Browser utility not initialized or maximize_window not available")
 
     def reload(self, wait_until: str = 'domcontentloaded', timeout: int = None) -> None:
         """

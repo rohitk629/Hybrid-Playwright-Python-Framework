@@ -2,6 +2,7 @@
 Login Page Object Model
 """
 from core.base.base_page import BasePage
+from core.base.base_test import BaseTest
 import allure
 
 
@@ -9,16 +10,16 @@ class LoginPage(BasePage):
     """Login page object for SauceDemo"""
 
     # Locators for SauceDemo
-    USERNAME_INPUT = "#user-name"
-    PASSWORD_INPUT = "#password"
-    LOGIN_BUTTON = "#login-button"
-    ERROR_MESSAGE = "[data-test='error']"
+    USERNAME_INPUT = "#Input_Email"
+    PASSWORD_INPUT = "#Input_Password"
+    LOGIN_BUTTON = "//*[@id='LoginForm']/div[3]/div[2]/button/span"
+    ERROR_MESSAGE = "//div[@class='feedback-message-text']"
     INVENTORY_CONTAINER = "#inventory_container"
 
     @allure.step("Enter username: {username}")
     def enter_username(self, username: str):
         """Enter username"""
-        self.enter_text(self.USERNAME_INPUT, username)
+        self.enter_text(self.USERNAME_INPUT, username, True,  15000)
 
     @allure.step("Enter password")
     def enter_password(self, password: str):
@@ -48,3 +49,4 @@ class LoginPage(BasePage):
     def is_logged_in(self) -> bool:
         """Check if user is logged in"""
         return self.is_element_visible(self.INVENTORY_CONTAINER, timeout=5000)
+
