@@ -2,9 +2,10 @@
 pytest==7.4.3
 pytest-playwright==0.4.3
 playwright==1.40.0
-pytest-xdist==3.5.0
+pytest-xdist==3.5.0              # For parallel execution
 pytest-html==4.1.1
 behave==1.2.6
+behave-html-formatter==0.9.10    # ADDED - Referenced in behave.ini but missing
 
 # ==================== Reporting ====================
 allure-pytest==2.13.2
@@ -29,7 +30,7 @@ faker==20.1.0
 
 # ==================== Configuration ====================
 python-dotenv==1.0.0
-configparser==6.0.0
+# configparser==6.0.0            # REMOVED - Built-in to Python 3.x
 
 # ==================== Logging ====================
 colorlog==6.8.0
@@ -37,3 +38,10 @@ colorlog==6.8.0
 # ==================== Utilities ====================
 python-dateutil==2.8.2
 Pillow==10.1.0
+
+# ==================== Additional Recommended Dependencies ====================
+pytest-rerunfailures==12.0       # NEW - For flaky test retry
+pytest-timeout==2.2.0            # NEW - Prevent hanging tests
+pytest-metadata==3.0.0           # NEW - Enhanced test metadata
+urllib3>=1.26.0,<2.0.0          # NEW - For compatibility
+certifi>=2023.7.22              # NEW - SSL certificate handling
