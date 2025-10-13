@@ -1,0 +1,20 @@
+app:
+  base_url: https://qa.saucedemo.com
+  environment: qa
+  debug_mode: false
+
+api:
+  base_url: https://qa-api.reqres.in/api
+  timeout: 30
+  verify_ssl: true
+
+test:
+  parallel_count: 4
+  retry_count: 2
+  screenshot:
+    on_success: false
+  video_recording: false
+
+logging:
+  level: INFO
+  file_path: logs/qa/automation-qa.log

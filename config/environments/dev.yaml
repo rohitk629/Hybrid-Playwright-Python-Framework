@@ -1,0 +1,20 @@
+app:
+  base_url: https://dev.saucedemo.com
+  environment: dev
+  debug_mode: true
+
+api:
+  base_url: https://dev-api.reqres.in/api
+  timeout: 45
+  verify_ssl: false
+
+test:
+  parallel_count: 2
+  retry_count: 3
+  screenshot:
+    on_success: true
+  video_recording: true
+
+logging:
+  level: DEBUG
+  file_path: logs/dev/automation-dev.log

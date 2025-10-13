@@ -1,0 +1,141 @@
+# Application Configuration
+app:
+  base_url: https://qos214.sk.bluecross.ca/IdPLogin/LoginMemberWeb
+  timeout: 30
+  environment: qa
+  application_name: Hybrid Automation Framework
+  version: 1.0.0
+
+# Browser Configuration
+browser:
+  type: chrome
+  headless: false
+  window_maximize: true
+  implicit_wait: 10
+  explicit_wait: 30
+  page_load_timeout: 60
+  download_path: downloads/
+  accept_insecure_certs: true
+  viewport:
+    width: 1920
+    height: 1080
+
+# API Configuration
+api:
+  base_url: https://reqres.in/api
+  timeout: 30
+  retry_count: 3
+  content_type: application/json
+  accept: application/json
+  verify_ssl: true
+  connection_timeout: 30
+  read_timeout: 30
+
+# Database Configuration (Optional)
+database:
+  enabled: false
+  host: localhost
+  port: 5432
+  name: test_db
+  username: testuser
+  password: testpass
+  driver: postgresql
+  pool_size: 5
+  connection_timeout: 30
+
+# Test Configuration
+test:
+  parallel_count: 4
+  retry_count: 2
+  data_provider_type: excel
+  screenshot:
+    on_failure: true
+    on_success: false
+    for_passed_tests: false
+    for_failed_tests: true
+  video_recording: false
+  soft_assert: false
+  hard_assert: true
+
+# Reporting Configuration
+report:
+  allure:
+    enabled: true
+    results_directory: reports/allure/allure-results
+    report_directory: reports/allure/allure-report
+  extent:
+    enabled: true
+    report_path: reports/extent/extent-report.html
+  pytest:
+    html_enabled: true
+    report_path: reports/pytest/pytest-report.html
+  screenshot_enabled: true
+  output_directory: reports
+
+# Logging Configuration
+logging:
+  level: INFO
+  file_path: logs/automation.log
+  console_enabled: true
+  file_enabled: true
+  max_file_size: 10MB
+  backup_count: 5
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  date_format: "%Y-%m-%d %H:%M:%S"
+
+# Email Configuration (Optional)
+email:
+  enabled: false
+  smtp:
+    host: smtp.gmail.com
+    port: 587
+  sender:
+    email: automation@example.com
+    password: your_app_password_here
+  recipients:
+    - team@example.com
+    - manager@example.com
+  subject_prefix: "[Automation Report]"
+  send:
+    on_failure: true
+    on_success: false
+
+# Slack Integration (Optional)
+slack:
+  enabled: false
+  webhook_url: https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+  channel: "#automation-reports"
+  username: Automation Bot
+  send:
+    on_failure: true
+    on_success: false
+
+# Performance Testing Configuration
+performance:
+  response_time_threshold: 5000
+  api_response_time_threshold: 3000
+  page_load_time_threshold: 10000
+
+# Proxy Configuration (Optional)
+proxy:
+  enabled: false
+  host: proxy.company.com
+  port: 8080
+  username: ""
+  password: ""
+  bypass_list:
+    - localhost
+    - 127.0.0.1
+
+# Security Configuration
+security:
+  encrypt_sensitive_data: true
+  mask_passwords_in_logs: true
+  mask_api_keys_in_logs: true
+
+# CI/CD Configuration
+ci_cd:
+  run_mode: local
+  headless_in_ci: true
+  parallel_tests_in_ci: 8
+  generate_reports_in_ci: true
