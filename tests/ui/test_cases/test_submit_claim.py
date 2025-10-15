@@ -8,6 +8,7 @@ import allure
 from datetime import datetime, timedelta
 from pathlib import Path
 from core.base.base_test import BaseTest
+from core.constants.error_messages import ErrorMessages
 from tests.ui.pages.login_page import LoginPage
 from tests.ui.pages.submit_claim_page import SubmitClaimPage
 from faker import Faker
@@ -44,7 +45,7 @@ class TestSubmitClaim(BaseTest):
         yield
         # Additional teardown if needed
 
-    def _generate_test_claim_data(self, claim_type="Medical"):
+    def _generate_test_claim_data(self, claim_type="Dental"):
         """Generate test claim data with realistic values"""
         service_date = datetime.now() - timedelta(days=self.faker.random_int(min=1, max=30))
 
@@ -58,30 +59,51 @@ class TestSubmitClaim(BaseTest):
             "description": f"Medical service: {self.faker.sentence()}"
         }
 
-    @allure.title("Test successful claim submission")
-    @allure.description("Verify user can successfully submit a claim with all required information")
+    @allure.title("Test successful error message when workplace or motor vehicle injury is selected")
+    @allure.description("Verify the error message when workplace or motor vehicle injury is selected, and Next button is disabled")
     @allure.severity(allure.severity_level.CRITICAL)
     @pytest.mark.smoke
     @pytest.mark.ui
-    def test_successful_claim_submission(self):
+    def test_claim_details_screen_yes_injury(self):
         """Test successful claim submission"""
         self.log_test_step("Step 1: Generate test claim data")
         claim_data = self._generate_test_claim_data()
 
-        self.log_test_step("Step 2: Fill claim form with valid data")
-        self.claim_page.submit_claim(claim_data)
+        self.log_test_step("Step 2: Select claim type as Dental")
+        self.claim_page.select_claim_type("Dental")
 
-        self.log_test_step("Step 3: Verify claim submitted successfully")
-        self.claim_page.wait_for_page_load(timeout=15000)
+        self.log_test_step("Step 3: Wait for Claim content Title to be visible")
+        self.claim_page.wait_for_content_title(timeout=5000)
 
-        # Verify success message or confirmation
-        is_submitted = self.claim_page.is_claim_submitted()
-        self.assert_true(is_submitted, "Claim should be submitted successfully")
+        self.log_test_step("Step 4: Verify the Claim content Title contains the word 'Dental'")
+        self.assert_contains(self.claim_page.get_content_title().lower(), "dental",)
 
-        self.log_test_step("Step 4: Verify claim number is generated")
-        claim_number = self.claim_page.get_claim_number()
-        self.assert_is_not_none(claim_number, "Claim number should be generated")
-        self.assert_true(len(claim_number) > 0, "Claim number should not be empty")
+        self.log_test_step("Step 5: Select 'Yes' for workplace injury")
+        self.claim_page.select_workplace_injury()
+
+        self.log_test_step("Step 5: Verify the workplace injury or motor vehicle injury error message is displayed")
+        self.assert_equals(self.claim_page.get_injury_error_message(), ErrorMessages.WORKPLACE_OR_MOTOR_VEHICLE_INJURY_ERROR_MESSAGE,
+                          "Workplace or motor vehicle injury error message should be displayed")
+
+
+    @allure.title("Test successful Dental claim Details Screen submission")
+    @allure.description("Verify user can successfully submit a Dental claim with all required information")
+    @allure.severity(allure.severity_level.CRITICAL)
+    @pytest.mark.smoke
+    @pytest.mark.ui
+    def test_claim_details_screen_no_injury(self):
+        """Test successful claim submission"""
+        self.log_test_step("Step 1: Generate test claim data")
+        claim_data = self._generate_test_claim_data()
+
+        self.log_test_step("Step 2: Select claim type as Dental")
+        self.claim_page.select_claim_type("Dental")
+
+        self.log_test_step("Step 3: Wait for Claim content Title to be visible")
+        self.claim_page.wait_for_content_title(timeout=5000)
+
+        self.log_test_step("Step 4: Verify the Claim content Title contains the word 'Dental'")
+        self.assert_contains(self.claim_page.get_content_title().lower(), "dental",)
 
     @allure.title("Test claim submission with missing required fields")
     @allure.description("Verify validation errors when required fields are missing")

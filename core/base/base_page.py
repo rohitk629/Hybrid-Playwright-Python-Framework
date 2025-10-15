@@ -352,6 +352,15 @@ class BasePage:
             self.logger.error(f"Wait for page load failed: {e}")
             raise
 
+    def wait_for_specific_time(self, seconds: int):
+        """
+        Wait for specified seconds
+        Args:
+            seconds: Number of seconds to wait
+        """
+        time.sleep(seconds)
+        self.logger.info(f"Waited for {seconds} seconds")
+
     # ========================================================================
     # DROPDOWN/SELECT METHODS
     # ========================================================================

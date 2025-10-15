@@ -45,3 +45,4 @@ pytest-timeout==2.2.0            # NEW - Prevent hanging tests
 pytest-metadata==3.0.0           # NEW - Enhanced test metadata
 urllib3>=1.26.0,<2.0.0          # NEW - For compatibility
 certifi>=2023.7.22              # NEW - SSL certificate handling
+pyyaml==6.0.1

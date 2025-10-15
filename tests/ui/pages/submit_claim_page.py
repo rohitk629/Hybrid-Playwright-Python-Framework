@@ -2,6 +2,7 @@
 Submit Claim Page Object Model
 Handles claim submission functionality for Blue Cross insurance portal
 """
+
 from core.base.base_page import BasePage
 import allure
 from typing import Optional
@@ -11,11 +12,19 @@ class SubmitClaimPage(BasePage):
     """Submit Claim page object"""
 
     # Navigation Locators
-    CLAIMS_MENU = "//a[contains(text(), 'Claims')]"
-    SUBMIT_CLAIM_LINK = "//a[contains(text(), 'Submit Claim')]"
+    CLAIMS_MENU = "//div[@id='b2-b10-Menu']"
+    SUBMIT_CLAIM_LINK = "//div[@id='b2-b10-Items']//a[@role='menuitem'][normalize-space()='SUBMIT A CLAIM']"
 
     # Claim Form Locators
-    CLAIM_TYPE_DROPDOWN = "#claimType"
+    CLAIM_CARDS = "//div[@class='list list-group OSFillParent']"
+    CLAIM_TO_SELECT = "//div[@class='claim-card-label text-align-center']/span[text()='temp']"
+    claimToSelect = ""
+    CLAIM_CONTENT_TITLE = "//div[@id='b1-Title']/span"
+    DATE_OF_SERVICE_INPUT = "//input[@aria-label='Select a date.']"
+    FULL_COST = "//input[@id='b11-Input_FullCost']"
+    AMOUNT_PAID_ANOTHER_POLICY  = "//input[@id='b11-Input_AmountPaidAnotherPolicy']"
+    AMOUNT_PAID_GOVT_PROGRAM = "//input[@id='b11-Input_AmountPaidGovernment']"
+    NEXT_BUTTON = "//button[@class='btn btn-primary width-5 OSFillParent']"
     PATIENT_NAME_INPUT = "#patientName"
     POLICY_NUMBER_INPUT = "#policyNumber"
     SERVICE_DATE_INPUT = "#serviceDate"
@@ -23,6 +32,12 @@ class SubmitClaimPage(BasePage):
     CLAIM_AMOUNT_INPUT = "#claimAmount"
     DESCRIPTION_TEXTAREA = "#claimDescription"
     RECEIPT_UPLOAD_INPUT = "#receiptUpload"
+
+    # Radio Buttons
+    RADIO_INJURY_YES = "//input[@name='b11-RadioGroup_IsInjury'][@value='1']"
+    RADIO_INJURY_NO = "//input[@name='b11-RadioGroup_IsInjury'][@value='0']"
+    RADIO_HAS_ANOTHER_CLAIM_YES = "//input[@name='b11-RadioGroup_HasPortion'][@value='1']"
+    RADIO_HAS_ANOTHER_CLAIM_NO = "//input[@name='b11-RadioGroup_HasPortion'][@value='0']"
 
     # Checkboxes
     TERMS_CHECKBOX = "#agreeTerms"
@@ -34,6 +49,7 @@ class SubmitClaimPage(BasePage):
     SAVE_DRAFT_BUTTON = "//button[contains(text(), 'Save as Draft')]"
 
     # Validation and Success Messages
+    WORKPLACE_INJURY_MESSAGE = "//div[@class='text-error']"
     SUCCESS_MESSAGE = "//div[@class='alert alert-success']"
     ERROR_MESSAGE = "//div[@class='alert alert-danger']"
     VALIDATION_ERROR = "//span[@class='field-validation-error']"
@@ -48,6 +64,7 @@ class SubmitClaimPage(BasePage):
     CLAIM_STATUS = "//td[@class='claim-status']"
     RECENT_CLAIM = "(//tr[@class='claim-row'])[1]"
 
+
     @allure.step("Navigate to Submit Claim page")
     def navigate_to_submit_claim(self):
         """Navigate to submit claim page from main menu"""
@@ -58,12 +75,33 @@ class SubmitClaimPage(BasePage):
     @allure.step("Select claim type: {claim_type}")
     def select_claim_type(self, claim_type: str):
         """
-        Select claim type from dropdown
+        Select claim type from the claim card list
 
         Args:
-            claim_type: Type of claim (e.g., 'Medical', 'Dental', 'Vision', 'Prescription')
+            claim_type: Type of claim (e.g., 'Ambulance', 'Dental', 'EHB', 'Prescription drugs')
         """
-        self.select_dropdown_by_label(self.CLAIM_TYPE_DROPDOWN, claim_type)
+        claim_to_select  = self.CLAIM_TO_SELECT.replace("temp", claim_type)
+        self.click(claim_to_select)
+
+    @allure.step("Wait for Claim content title to be visible")
+    def wait_for_content_title(self, timeout):
+        self.wait_for_specific_time(10)  # Wait for 3 seconds to allow content to load
+        self.wait_for_element(self.CLAIM_CONTENT_TITLE, timeout=timeout)
+
+    @allure.step("Get Claim content title")
+    def get_content_title(self):
+        """Get the Claim content title text"""
+        return self.get_text(self.CLAIM_CONTENT_TITLE)
+
+    @allure.step("Select 'Yes' for workplace injury radio button")
+    def select_workplace_injury(self):
+        """Select 'Yes' for workplace injury radio button"""
+        self.click(self.RADIO_INJURY_YES)
+
+    @allure.step("Get the displayed error message for workplace injury")
+    def get_injury_error_message(self):
+        """Get the Claim content title text"""
+        return self.get_text(self.WORKPLACE_INJURY_MESSAGE)
 
     @allure.step("Enter patient name: {patient_name}")
     def enter_patient_name(self, patient_name: str):
@@ -233,11 +271,15 @@ class SubmitClaimPage(BasePage):
     @allure.step("Wait for form to load")
     def wait_for_form_load(self):
         """Wait for claim form to fully load"""
-        self.wait_for_element(self.CLAIM_TYPE_DROPDOWN, timeout=15000)
-        self.wait_for_element(self.SUBMIT_BUTTON, timeout=10000)
+        self.wait_for_element(self.CLAIM_CARDS, timeout=15000)
         self.wait_for_page_load()
 
     @allure.step("Check if form is displayed")
     def is_form_displayed(self) -> bool:
         """Check if claim form is displayed"""
         return self.is_element_visible(self.CLAIM_TYPE_DROPDOWN, timeout=5000)
+
+
+
+
+

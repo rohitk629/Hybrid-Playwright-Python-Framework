@@ -1,10 +1,13 @@
 """
 Error Messages Constants
+Module-level constants for easy access
 """
 
 
+
+# Optional: Keep the class for backward compatibility with code that uses ErrorMessages.CONSTANT_NAME
 class ErrorMessages:
-    """Error message constants"""
+    """Error message constants class (for backward compatibility)"""
 
     # Validation Errors
     REQUIRED_FIELD = "This field is required"
@@ -33,3 +36,6 @@ class ErrorMessages:
     FILE_NOT_FOUND = "File not found: {file_path}"
     FILE_READ_ERROR = "Error reading file: {file_path}"
     FILE_WRITE_ERROR = "Error writing file: {file_path}"
+
+    # Claim Submission Errors
+    WORKPLACE_OR_MOTOR_VEHICLE_INJURY_ERROR_MESSAGE = "Please submit this claim to the automobile insurance carrier or Workers' Compensation Board for consideration."
